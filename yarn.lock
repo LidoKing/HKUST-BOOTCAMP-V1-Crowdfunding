@@ -2150,6 +2150,7 @@ __metadata:
     fs-extra: ^10.0.1
     hardhat: ^2.9.2
     hardhat-gas-reporter: ^1.0.8
+    hardhat-spdx-license-identifier: ^2.0.3
     husky: ^7.0.4
     lint-staged: ^12.3.7
     lodash: ^4.17.21
@@ -8673,6 +8674,15 @@ fsevents@~2.1.1:
   peerDependencies:
     hardhat: ^2.0.2
   checksum: bf18aacd08e0bdef81b180f3c97f76fcab885de3e92ed2dc014712e671c83ee7f77755c0e6c0f923a95f8372714cfcb7cdaa019afc42984c159603f8a8d724cf
+  languageName: node
+  linkType: hard
+
+"hardhat-spdx-license-identifier@npm:^2.0.3":
+  version: 2.0.3
+  resolution: "hardhat-spdx-license-identifier@npm:2.0.3"
+  peerDependencies:
+    hardhat: ^2.0.0
+  checksum: 015906c5f8d610b3223226c672005f98187508ff04a4bf097f63807147bcecc32dda227f304216568c426138b24f4fa76efca19a679f051e086f63d6514542f5
   languageName: node
   linkType: hard
 
