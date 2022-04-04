@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: UNLICENSED
+
 pragma solidity >=0.8.4 <0.9.0;
 
 contract Crowdfund {
@@ -15,4 +17,19 @@ contract Crowdfund {
 
     mapping(uint256 => Project) projects;
     mapping(uint256 => mapping(address => bool)) hasFunded;
+
+    function createProject(uint128 _goal, uint256 _periodInDays) external {
+        Project memory newProject = Project(
+            payable(msg.sender),
+            0,
+            _goal,
+            0,
+            block.timestamp,
+            block.timestamp + _periodInDays * 1 days,
+            false
+        );
+
+        projects[projectId] = newProject;
+        projectId++;
+    }
 }
