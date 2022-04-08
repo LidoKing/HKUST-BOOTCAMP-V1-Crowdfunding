@@ -36,11 +36,11 @@ contract Crowdfund {
         return (_amount * 10) ^ 18;
     }
 
-    function createProject(uint128 _goal, uint256 _periodInDays) external {
+    function createProject(uint256 _goal, uint256 _periodInDays) external {
         Project memory newProject = Project(
             payable(msg.sender),
             0,
-            toSmallestUnit(uint256(_goal)),
+            uint128(toSmallestUnit(_goal)),
             0,
             block.timestamp,
             block.timestamp + _periodInDays * 1 days,
@@ -51,5 +51,17 @@ contract Crowdfund {
         projectId++;
     }
 
-    function fundProject(uint256 _id, uint256 _amount) external approvedEnough(_amount) {}
+    function fundProject(uint256 _id, uint256 _amount) external approvedEnough(_amount) {
+        Project storage theProject = projects[_id];
+        uint256 amountInSmallestUnit = toSmallestUnit(_amount);
+
+        dai.transferFrom(msg.sender, address(this), amountInSmallestUnit);
+        theProject.currentAmount += uint128(amountInSmallestUnit);
+        // Will not increase funder twice if funded before
+        if (hasFunded[_id][msg.sender] == false) {
+            theProject.funders++;
+        }
+        hasFunded[_id][msg.sender] = true;
+        fundedAmount[msg.sender][_id] += amountInSmallestUnit;
+    }
 }
