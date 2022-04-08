@@ -29,7 +29,7 @@ contract Crowdfund {
     }
 
     constructor(address _daiContractAddress) {
-        DAIToken dai = DAIToken(_daiContractAddress);
+        dai = DAIToken(_daiContractAddress);
     }
 
     function toSmallestUnit(uint256 _amount) internal pure returns (uint256) {
