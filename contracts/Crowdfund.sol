@@ -15,12 +15,34 @@ contract Crowdfund {
         uint128 currentAmount;
         uint256 startTime;
         uint256 endTime;
-        bool ended;
     }
 
     mapping(uint256 => Project) projects;
     mapping(uint256 => mapping(address => bool)) hasFunded;
     mapping(address => mapping(uint256 => uint256)) fundedAmount;
+
+    modifier canRefund(uint256 _id) {
+        Project memory thisProject = projects[_id];
+        require(block.timestamp >= thisProject.endTime, "Funding of this project has not ended.");
+        require(thisProject.currentAmount < thisProject.goal, "Funding goal has been reached, refund not allowed.");
+        _;
+    }
+
+    modifier canClaim(uint256 _id) {
+        Project memory thisProject = projects[_id];
+        require(block.timestamp >= thisProject.endTime, "Funding of this project has not ended.");
+        require(
+            thisProject.currentAmount >= thisProject.goal,
+            "Funding goal is not reached, you cannot claim the funds."
+        );
+        _;
+    }
+
+    modifier notEnded(uint256 _id) {
+        Project memory thisProject = projects[_id];
+        require(block.timestamp < thisProject.endTime, "Project has ended funding");
+        _;
+    }
 
     modifier approvedEnough(uint256 _fundAmount) {
         uint256 allowed = dai.allowance(msg.sender, address(this));
@@ -43,23 +65,22 @@ contract Crowdfund {
             uint128(toSmallestUnit(_goal)),
             0,
             block.timestamp,
-            block.timestamp + _periodInDays * 1 days,
-            false
+            block.timestamp + _periodInDays * 1 days
         );
 
         projects[projectId] = newProject;
         projectId++;
     }
 
-    function fundProject(uint256 _id, uint256 _amount) external approvedEnough(_amount) {
-        Project storage theProject = projects[_id];
+    function fundProject(uint256 _id, uint256 _amount) external notEnded(_id) approvedEnough(_amount) {
+        Project storage thisProject = projects[_id];
         uint256 amountInSmallestUnit = toSmallestUnit(_amount);
 
         dai.transferFrom(msg.sender, address(this), amountInSmallestUnit);
-        theProject.currentAmount += uint128(amountInSmallestUnit);
-        // Will not increase funder twice if funded before
+        thisProject.currentAmount += uint128(amountInSmallestUnit);
+        // Will not increase same funder more than once
         if (hasFunded[_id][msg.sender] == false) {
-            theProject.funders++;
+            thisProject.funders++;
         }
         hasFunded[_id][msg.sender] = true;
         fundedAmount[msg.sender][_id] += amountInSmallestUnit;
