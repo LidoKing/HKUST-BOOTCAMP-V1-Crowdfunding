@@ -22,11 +22,17 @@ contract Crowdfund {
     mapping(uint256 => mapping(address => bool)) hasFunded;
     mapping(address => mapping(uint256 => uint256)) fundedAmount;
 
+    modifier approvedEnough(uint256 _fundAmount) {
+        uint256 allowed = dai.allowance(msg.sender, address(this));
+        require(allowed >= toSmallestUnit(_fundAmount), "Amount approved not enough.");
+        _;
+    }
+
     constructor(address _daiContractAddress) {
         DAIToken dai = DAIToken(_daiContractAddress);
     }
 
-    function toSmallestUnit(uint256 _amount) internal returns (uint256) {
+    function toSmallestUnit(uint256 _amount) internal pure returns (uint256) {
         return (_amount * 10) ^ 18;
     }
 
@@ -34,7 +40,7 @@ contract Crowdfund {
         Project memory newProject = Project(
             payable(msg.sender),
             0,
-            _goal,
+            toSmallestUnit(uint256(_goal)),
             0,
             block.timestamp,
             block.timestamp + _periodInDays * 1 days,
@@ -45,5 +51,5 @@ contract Crowdfund {
         projectId++;
     }
 
-    function fundProject(uint256 _id, uint256 _amount) external {}
+    function fundProject(uint256 _id, uint256 _amount) external approvedEnough(_amount) {}
 }
