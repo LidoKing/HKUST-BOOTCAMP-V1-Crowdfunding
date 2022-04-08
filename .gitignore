@@ -15,6 +15,9 @@
 **/dist
 **/node_modules
 **/src
+contracts/Greeter.sol
+test/greeter
+tasks/deploy/greeter.ts
 
 # files
 *.env
