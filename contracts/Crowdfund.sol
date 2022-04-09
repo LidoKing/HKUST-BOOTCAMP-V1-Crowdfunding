@@ -9,12 +9,13 @@ contract Crowdfund {
     DAIToken dai;
 
     struct Project {
-        address payable creator;
-        uint64 funders;
-        uint128 goal;
-        uint128 currentAmount;
-        uint256 startTime;
-        uint256 endTime;
+        address payable creator; // pack 1
+        uint64 funders; // pack 1
+        uint128 goal; // pack 2
+        uint128 currentAmount; // pack 2
+        uint64 startTime; // pack 3
+        uint64 endTime; // pack 3
+        uint128 claimed; //pack 3
     }
 
     mapping(uint256 => Project) projects;
@@ -30,11 +31,9 @@ contract Crowdfund {
 
     modifier canClaim(uint256 _id) {
         Project memory thisProject = projects[_id];
+        require(thisProject.creator == msg.sender, "You are not the creator of the project.");
         require(block.timestamp >= thisProject.endTime, "Funding of this project has not ended.");
-        require(
-            thisProject.currentAmount >= thisProject.goal,
-            "Funding goal is not reached, you cannot claim the funds."
-        );
+        require(thisProject.currentAmount >= thisProject.goal, "Funding goal is not reached, funds will be returned.");
         _;
     }
 
@@ -64,8 +63,9 @@ contract Crowdfund {
             0,
             uint128(toSmallestUnit(_goal)),
             0,
-            block.timestamp,
-            block.timestamp + _periodInDays * 1 days
+            uint64(block.timestamp),
+            uint64(block.timestamp + _periodInDays * 1 days),
+            0
         );
 
         projects[projectId] = newProject;
@@ -85,4 +85,10 @@ contract Crowdfund {
         hasFunded[_id][msg.sender] = true;
         fundedAmount[msg.sender][_id] += amountInSmallestUnit;
     }
+
+    function claimFunds(uint256 _id) external canClaim(_id) {}
+
+    function reduceFunding(uint256 _id) external notEnded(_id) {}
+
+    function claimRefund(uint256 _id) external canRefund(_id) {}
 }
