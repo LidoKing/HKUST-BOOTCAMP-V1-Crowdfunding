@@ -6,7 +6,7 @@ import "./DAIToken.sol";
 
 contract Crowdfund {
     uint256 projectId;
-    DAIToken dai;
+    IDAIToken dai;
 
     struct Project {
         address payable creator; // pack 1
@@ -54,7 +54,7 @@ contract Crowdfund {
     }
 
     constructor(address _daiContractAddress) {
-        dai = DAIToken(_daiContractAddress);
+        dai = IDAIToken(_daiContractAddress);
     }
 
     function toSmallestUnit(uint256 _amount) internal pure returns (uint256) {
