@@ -33,7 +33,10 @@ contract Crowdfund {
         Project memory thisProject = projects[_id];
         require(thisProject.creator == msg.sender, "You are not the creator of the project.");
         require(block.timestamp >= thisProject.endTime, "Funding of this project has not ended.");
-        require(thisProject.currentAmount >= thisProject.goal, "Funding goal is not reached, funds will be returned.");
+        require(
+            thisProject.currentAmount >= thisProject.goal,
+            "Funding goal is not reached / Funds have already been claimed."
+        );
         _;
     }
 
@@ -86,7 +89,14 @@ contract Crowdfund {
         fundedAmount[msg.sender][_id] += amountInSmallestUnit;
     }
 
-    function claimFunds(uint256 _id) external canClaim(_id) {}
+    function claimFunds(uint256 _id) external canClaim(_id) {
+        Project storage thisProject = projects[_id];
+        uint256 amount = thisProject.currentAmount;
+        thisProject.currentAmount = 0;
+
+        dai.transfer(msg.sender, amount);
+        thisProject.claimed = uint128(amount);
+    }
 
     function reduceFunding(uint256 _id) external notEnded(_id) {}
 
