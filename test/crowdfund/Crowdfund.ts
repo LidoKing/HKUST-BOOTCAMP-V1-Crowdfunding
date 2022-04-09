@@ -33,8 +33,8 @@ describe("Unit tests", function () {
         ])
       );
 
-      const crowdfundArtifact: Artifact = await artifacts.readArtifact("Crowdfund");
-      this.cf = <Crowdfund>await waffle.deployContract(this.signers.admin, crowdfundArtifact, [this.tkn.address]);
+      const cfArtifact: Artifact = await artifacts.readArtifact("Crowdfund");
+      this.cf = <Crowdfund>await waffle.deployContract(this.signers.admin, cfArtifact, [this.tkn.address]);
     });
   });
 });
