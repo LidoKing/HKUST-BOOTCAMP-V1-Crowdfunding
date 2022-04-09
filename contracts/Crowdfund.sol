@@ -20,12 +20,13 @@ contract Crowdfund {
 
     mapping(uint256 => Project) projects;
     mapping(uint256 => mapping(address => bool)) hasFunded;
-    mapping(address => mapping(uint256 => uint256)) fundedAmount;
+    mapping(uint256 => mapping(address => uint256)) fundedAmount;
 
     modifier canRefund(uint256 _id) {
         Project memory thisProject = projects[_id];
         require(block.timestamp >= thisProject.endTime, "Funding of this project has not ended.");
         require(thisProject.currentAmount < thisProject.goal, "Funding goal has been reached, refund not allowed.");
+        require(hasFunded[_id][msg.sender] != 0, "You never funded this project.");
         _;
     }
 
@@ -77,16 +78,16 @@ contract Crowdfund {
 
     function fundProject(uint256 _id, uint256 _amount) external notEnded(_id) approvedEnough(_amount) {
         Project storage thisProject = projects[_id];
-        uint256 amountInSmallestUnit = toSmallestUnit(_amount);
+        uint256 amountSU = toSmallestUnit(_amount);
 
-        dai.transferFrom(msg.sender, address(this), amountInSmallestUnit);
-        thisProject.currentAmount += uint128(amountInSmallestUnit);
+        dai.transferFrom(msg.sender, address(this), amountSU);
+        thisProject.currentAmount += uint128(amountSU);
         // Will not increase same funder more than once
         if (hasFunded[_id][msg.sender] == false) {
             thisProject.funders++;
         }
         hasFunded[_id][msg.sender] = true;
-        fundedAmount[msg.sender][_id] += amountInSmallestUnit;
+        fundedAmount[_id][msg.sender] += amountSU;
     }
 
     function claimFunds(uint256 _id) external canClaim(_id) {
@@ -98,7 +99,16 @@ contract Crowdfund {
         thisProject.claimed = uint128(amount);
     }
 
-    function reduceFunding(uint256 _id) external notEnded(_id) {}
+    function reduceFunding(uint256 _id, uint256 _amountToReduce) external notEnded(_id) {
+        Project storage thisProject = projects[_id];
+        uint256 _amountToReduceSU = toSmallestUnit(_amountToReduce);
+        require(fundedAmount[_id][msg.sender] >= _amountToReduceSU, "Amount funded less than withdrawal amount.");
+
+        fundedAmount[_id][msg.sender] -= _amountToReduceSU;
+
+        dai.transfer(msg.sender, _amountToReduceSU);
+        thisProject.currentAmount -= uint128(_amountToReduceSU);
+    }
 
     function claimRefund(uint256 _id) external canRefund(_id) {}
 }
