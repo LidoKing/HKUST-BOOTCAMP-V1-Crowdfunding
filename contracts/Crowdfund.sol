@@ -2,11 +2,13 @@
 
 pragma solidity >=0.8.4 <0.9.0;
 
-import "./DAIToken.sol";
+//import "./DAIToken.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract Crowdfund {
     uint256 projectId;
-    IDAIToken dai;
+    //IDAIToken dai;
+    IERC20 tkn;
 
     struct Project {
         address payable creator; // pack 1
@@ -48,13 +50,14 @@ contract Crowdfund {
     }
 
     modifier approvedEnough(uint256 _fundAmount) {
-        uint256 allowed = dai.allowance(msg.sender, address(this));
+        uint256 allowed = tkn.allowance(msg.sender, address(this));
         require(allowed >= toSmallestUnit(_fundAmount), "Amount approved not enough.");
         _;
     }
 
-    constructor(address _daiContractAddress) {
-        dai = IDAIToken(_daiContractAddress);
+    constructor(address _tokenAddress) {
+        //dai = IDAIToken(_tokenAddress);
+        tkn = IERC20(_tokenAddress);
     }
 
     function toSmallestUnit(uint256 _amount) internal pure returns (uint256) {
@@ -80,7 +83,7 @@ contract Crowdfund {
         Project storage thisProject = projects[_id];
         uint256 amountSU = toSmallestUnit(_amount);
 
-        dai.transferFrom(msg.sender, address(this), amountSU);
+        tkn.transferFrom(msg.sender, address(this), amountSU);
         thisProject.currentAmount += uint128(amountSU);
         // Will not increase same funder more than once
         if (hasFunded[_id][msg.sender] == false) {
@@ -95,7 +98,7 @@ contract Crowdfund {
         uint256 amount = thisProject.currentAmount;
         thisProject.currentAmount = 0;
 
-        dai.transfer(msg.sender, amount);
+        tkn.transfer(msg.sender, amount);
         thisProject.claimed = uint128(amount);
     }
 
@@ -106,13 +109,13 @@ contract Crowdfund {
 
         fundedAmount[_id][msg.sender] -= _amountToReduceSU;
 
-        dai.transfer(msg.sender, _amountToReduceSU);
+        tkn.transfer(msg.sender, _amountToReduceSU);
         thisProject.currentAmount -= uint128(_amountToReduceSU);
     }
 
     function claimRefund(uint256 _id) external canRefund(_id) {
         uint256 refundAmount = fundedAmount[_id][msg.sender];
         fundedAmount[_id][msg.sender] = 0;
-        dai.transfer(msg.sender, refundAmount);
+        tkn.transfer(msg.sender, refundAmount);
     }
 }
