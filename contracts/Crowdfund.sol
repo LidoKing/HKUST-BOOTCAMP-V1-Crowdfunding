@@ -102,6 +102,13 @@ contract Crowdfund {
         thisProject.claimed = uint128(amount);
     }
 
+    // Withdraw all funded money
+    function reduceFunding(uint256 _id) external notEnded(_id) {
+        uint256 totalFunded = fundedAmount[_id][msg.sender];
+        reduceFunding(_id, totalFunded);
+    }
+
+    // Withdraw some funded money
     function reduceFunding(uint256 _id, uint256 _amountToReduce) external notEnded(_id) {
         Project storage thisProject = projects[_id];
         uint256 _amountToReduceSU = toSmallestUnit(_amountToReduce);
