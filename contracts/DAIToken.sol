@@ -2,7 +2,7 @@
 
 pragma solidity >=0.8.4 <0.9.0;
 
-interface DAIToken {
+interface IDAIToken {
     function allowance(address arg1, address arg2) external returns (uint256);
 
     function transferFrom(
