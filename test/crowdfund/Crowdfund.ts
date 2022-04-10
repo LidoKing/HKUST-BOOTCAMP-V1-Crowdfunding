@@ -50,9 +50,13 @@ describe("Unit tests", function () {
 
     it("should create project", async function () {
       let goal: BigNumberish = ethers.utils.parseEther("2500");
-      await this.cf.createProject(goal, 30);
+      await this.cf.connect(this.signers.admin).createProject(goal, 30);
       let newProject = await this.cf.projects(0);
+      expect(newProject.creator).to.equal(this.signers.admin.address);
       expect(newProject.goal).to.equal(goal);
+      expect(newProject.currentAmount).to.equal(0);
     });
+
+    it("should fund project", async function () {});
   });
 });
