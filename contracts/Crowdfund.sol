@@ -55,6 +55,12 @@ contract Crowdfund {
         _;
     }
 
+    modifier enoughBalance(uint256 _fundAmount) {
+        uint256 balance = tkn.balanceOf(msg.sender);
+        require(balance >= _fundAmount, "You do not have enough money.");
+        _;
+    }
+
     constructor(address _tokenAddress) {
         //dai = IDAIToken(_tokenAddress);
         tkn = IERC20(_tokenAddress);
@@ -79,7 +85,12 @@ contract Crowdfund {
         projectId++;
     }
 
-    function fundProject(uint256 _id, uint256 _amount) external notEnded(_id) approvedEnough(_amount) {
+    function fundProject(uint256 _id, uint256 _amount)
+        external
+        notEnded(_id)
+        approvedEnough(_amount)
+        enoughBalance(_amount)
+    {
         Project storage thisProject = projects[_id];
         uint256 amountSU = _amount;
 
