@@ -20,7 +20,7 @@ contract Crowdfund {
         uint128 claimed; //pack 3
     }
 
-    mapping(uint256 => Project) projects;
+    mapping(uint256 => Project) public projects;
     mapping(uint256 => mapping(address => bool)) hasFunded;
     mapping(uint256 => mapping(address => uint256)) fundedAmount;
 
