@@ -1,4 +1,4 @@
-import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-with-address";
+/*import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-with-address";
 import { artifacts, ethers, waffle } from "hardhat";
 import type { Artifact } from "hardhat/types";
 
@@ -24,3 +24,4 @@ describe("Unit tests", function () {
     shouldBehaveLikeGreeter();
   });
 });
+*/
