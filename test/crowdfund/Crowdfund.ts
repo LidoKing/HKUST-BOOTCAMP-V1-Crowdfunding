@@ -1,4 +1,6 @@
+import { BigNumberish } from "@ethersproject/bignumber";
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-with-address";
+import { expect } from "chai";
 import { artifacts, ethers, waffle } from "hardhat";
 import type { Artifact } from "hardhat/types";
 
@@ -35,6 +37,22 @@ describe("Unit tests", function () {
 
       const cfArtifact: Artifact = await artifacts.readArtifact("Crowdfund");
       this.cf = <Crowdfund>await waffle.deployContract(this.signers.admin, cfArtifact, [this.tkn.address]);
+    });
+
+    it("should mint 1000 tokens to each account", async function () {
+      // Can use ethers utils for unit convertion as number of decimals is th same as ETH
+      expect(await this.tkn.balanceOf(this.signers.admin.address)).to.equal(ethers.utils.parseEther("1000"));
+      expect(await this.tkn.balanceOf(this.signers.signer1.address)).to.equal(ethers.utils.parseEther("1000"));
+      expect(await this.tkn.balanceOf(this.signers.signer2.address)).to.equal(ethers.utils.parseEther("1000"));
+      expect(await this.tkn.balanceOf(this.signers.signer3.address)).to.equal(ethers.utils.parseEther("1000"));
+      expect(await this.tkn.balanceOf(this.signers.signer4.address)).to.equal(ethers.utils.parseEther("1000"));
+    });
+
+    it("should create project", async function () {
+      let goal: BigNumberish = ethers.utils.parseEther("2500");
+      await this.cf.createProject(goal, 30);
+      let newProject = await this.cf.projects(0);
+      expect(newProject.goal).to.equal(goal);
     });
   });
 });
