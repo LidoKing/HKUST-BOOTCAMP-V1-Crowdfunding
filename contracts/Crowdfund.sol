@@ -51,7 +51,7 @@ contract Crowdfund {
 
     modifier approvedEnough(uint256 _fundAmount) {
         uint256 allowed = tkn.allowance(msg.sender, address(this));
-        require(allowed >= toSmallestUnit(_fundAmount), "Amount approved not enough.");
+        require(allowed >= _fundAmount, "Amount approved not enough.");
         _;
     }
 
@@ -60,15 +60,15 @@ contract Crowdfund {
         tkn = IERC20(_tokenAddress);
     }
 
-    function toSmallestUnit(uint256 _amount) internal pure returns (uint256) {
-        return (_amount * 10) ^ 18;
-    }
+    /*function toSmallestUnit(uint256 _amount) internal pure returns (uint256) {
+        return _amount * (10 ** 18);
+    }*/
 
     function createProject(uint256 _goal, uint256 _periodInDays) external {
         Project memory newProject = Project(
             payable(msg.sender),
             0,
-            uint128(toSmallestUnit(_goal)),
+            uint128(_goal),
             0,
             uint64(block.timestamp),
             uint64(block.timestamp + _periodInDays * 1 days),
@@ -81,7 +81,7 @@ contract Crowdfund {
 
     function fundProject(uint256 _id, uint256 _amount) external notEnded(_id) approvedEnough(_amount) {
         Project storage thisProject = projects[_id];
-        uint256 amountSU = toSmallestUnit(_amount);
+        uint256 amountSU = _amount;
 
         tkn.transferFrom(msg.sender, address(this), amountSU);
         thisProject.currentAmount += uint128(amountSU);
@@ -105,7 +105,7 @@ contract Crowdfund {
     // Withdraw some funded money
     function reduceFunding(uint256 _id, uint256 _amountToReduce) public notEnded(_id) {
         Project storage thisProject = projects[_id];
-        uint256 _amountToReduceSU = toSmallestUnit(_amountToReduce);
+        uint256 _amountToReduceSU = _amountToReduce;
         require(fundedAmount[_id][msg.sender] >= _amountToReduceSU, "Amount funded less than withdrawal amount.");
 
         fundedAmount[_id][msg.sender] -= _amountToReduceSU;
