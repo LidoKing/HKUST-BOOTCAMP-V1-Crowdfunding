@@ -92,16 +92,15 @@ contract Crowdfund {
         enoughBalance(_amount)
     {
         Project storage thisProject = projects[_id];
-        uint256 amountSU = _amount;
 
-        tkn.transferFrom(msg.sender, address(this), amountSU);
-        thisProject.currentAmount += uint128(amountSU);
+        tkn.transferFrom(msg.sender, address(this), _amount);
+        thisProject.currentAmount += uint128(_amount);
         // Will not increase same funder more than once
         if (hasFunded[_id][msg.sender] == false) {
             thisProject.funders++;
         }
         hasFunded[_id][msg.sender] = true;
-        fundedAmount[_id][msg.sender] += amountSU;
+        fundedAmount[_id][msg.sender] += _amount;
     }
 
     function claimFunds(uint256 _id) external canClaim(_id) {
