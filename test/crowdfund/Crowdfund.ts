@@ -72,5 +72,25 @@ describe("Unit tests", function () {
       expect(project.currentAmount).to.equal(amount);
       expect(project.funders).to.equal(1);
     });
+
+    it("should claim funds after successful funding", async function () {
+      // Create project
+      let goal: BigNumberish = ethers.utils.parseEther("500");
+      await this.cf.connect(this.signers.admin).createProject(goal, 10);
+
+      // Fund project
+      let amount: BigNumberish = ethers.utils.parseEther("600");
+      await this.tkn.connect(this.signers.signer1).approve(this.cf.address, amount);
+      await this.cf.connect(this.signers.signer1).fundProject(0, amount);
+      // Fast forward time to end funding
+      let timestamp: number = Date.now() + 11 * 24 * 3600; // 11 days
+      await ethers.provider.send("evm_mine", [timestamp]);
+      await this.cf.connect(this.signers.admin).claimFunds(0);
+      let project = await this.cf.projects(0);
+      expect(project.claimed).to.equal(amount);
+      expect(project.currentAmount).to.equal(0);
+    });
+
+    it("should not allow claiming funds if funding has not ended", async function () {});
   });
 });
