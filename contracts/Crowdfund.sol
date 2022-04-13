@@ -131,8 +131,10 @@ contract Crowdfund {
     }
 
     function claimRefund(uint256 _id) external canRefund(_id) {
+        Project storage thisProject = projects[_id];
         uint256 refundAmount = fundedAmount[_id][msg.sender];
         fundedAmount[_id][msg.sender] = 0;
         tkn.transfer(msg.sender, refundAmount);
+        thisProject.currentAmount -= uint128(refundAmount);
     }
 }
