@@ -39,17 +39,22 @@ describe("Unit tests", function () {
       this.cf = <Crowdfund>await waffle.deployContract(this.signers.admin, cfArtifact, [this.tkn.address]);
     });
 
+    // Convert to smallest unit
+    function su(amount: string): BigNumberish {
+      return ethers.utils.parseEther(amount);
+    }
+
     it("should mint 1000 tokens to each account", async function () {
       // Can use ethers utils for unit convertion as number of decimals is th same as ETH
-      expect(await this.tkn.balanceOf(this.signers.admin.address)).to.equal(ethers.utils.parseEther("1000"));
-      expect(await this.tkn.balanceOf(this.signers.signer1.address)).to.equal(ethers.utils.parseEther("1000"));
-      expect(await this.tkn.balanceOf(this.signers.signer2.address)).to.equal(ethers.utils.parseEther("1000"));
-      expect(await this.tkn.balanceOf(this.signers.signer3.address)).to.equal(ethers.utils.parseEther("1000"));
-      expect(await this.tkn.balanceOf(this.signers.signer4.address)).to.equal(ethers.utils.parseEther("1000"));
+      expect(await this.tkn.balanceOf(this.signers.admin.address)).to.equal(su("1000"));
+      expect(await this.tkn.balanceOf(this.signers.signer1.address)).to.equal(su("1000"));
+      expect(await this.tkn.balanceOf(this.signers.signer2.address)).to.equal(su("1000"));
+      expect(await this.tkn.balanceOf(this.signers.signer3.address)).to.equal(su("1000"));
+      expect(await this.tkn.balanceOf(this.signers.signer4.address)).to.equal(su("1000"));
     });
 
     it("should create project", async function () {
-      let goal: BigNumberish = ethers.utils.parseEther("2500");
+      let goal: BigNumberish = su("2500");
       await this.cf.connect(this.signers.admin).createProject(goal, 30);
       let project = await this.cf.projects(0);
       expect(project.creator).to.equal(this.signers.admin.address);
@@ -59,11 +64,10 @@ describe("Unit tests", function () {
 
     it("should fund project", async function () {
       // Create project
-      let goal: BigNumberish = ethers.utils.parseEther("2500");
+      let goal: BigNumberish = su("2500");
       await this.cf.connect(this.signers.admin).createProject(goal, 30);
-
       // Fund project
-      let amount: BigNumberish = ethers.utils.parseEther("500");
+      let amount: BigNumberish = su("500");
       await this.tkn.connect(this.signers.signer1).approve(this.cf.address, amount);
       await this.cf.connect(this.signers.signer1).fundProject(0, amount);
       let project = await this.cf.projects(0);
@@ -75,15 +79,17 @@ describe("Unit tests", function () {
 
     it("should claim funds after successful funding", async function () {
       // Create project
-      let goal: BigNumberish = ethers.utils.parseEther("500");
+      let goal: BigNumberish = su("500");
       await this.cf.connect(this.signers.admin).createProject(goal, 10);
-
+      let blockNum: number = await ethers.provider.getBlockNumber();
+      let block = await ethers.provider.getBlock(blockNum);
+      let creationTime = block.timestamp;
       // Fund project
-      let amount: BigNumberish = ethers.utils.parseEther("600");
+      let amount: BigNumberish = su("600");
       await this.tkn.connect(this.signers.signer1).approve(this.cf.address, amount);
       await this.cf.connect(this.signers.signer1).fundProject(0, amount);
       // Fast forward time to end funding
-      let timestamp: number = Date.now() + 11 * 24 * 3600; // 11 days
+      let timestamp: number = creationTime + 11 * 24 * 3600; // 11 days
       await ethers.provider.send("evm_mine", [timestamp]);
       await this.cf.connect(this.signers.admin).claimFunds(0);
       let project = await this.cf.projects(0);
@@ -91,6 +97,24 @@ describe("Unit tests", function () {
       expect(project.currentAmount).to.equal(0);
     });
 
-    it("should not allow claiming funds if funding has not ended", async function () {});
+    it("should claim refunds if funding failed", async function () {
+      // Create project
+      let goal: BigNumberish = su("500");
+      await this.cf.connect(this.signers.admin).createProject(goal, 10);
+      let blockNum: number = await ethers.provider.getBlockNumber();
+      let block = await ethers.provider.getBlock(blockNum);
+      let creationTime = block.timestamp;
+      // Fund project
+      let amount: BigNumberish = su("400");
+      await this.tkn.connect(this.signers.signer1).approve(this.cf.address, amount);
+      await this.cf.connect(this.signers.signer1).fundProject(0, amount);
+      // Fast forward time to end funding
+      let timestamp: number = creationTime + 11 * 24 * 3600; // 11 days
+      await ethers.provider.send("evm_mine", [timestamp]);
+      // Claim refund
+      await this.cf.connect(this.signers.signer1).claimRefund(0);
+      let project = await this.cf.projects(0);
+      expect(project.currentAmount).to.equal(0);
+    });
   });
 });
