@@ -115,23 +115,23 @@ contract Crowdfund {
     // Withdraw some funded money
     function reduceFunding(uint256 _id, uint256 _amountToReduce) public notEnded(_id) {
         Project storage thisProject = projects[_id];
-        uint256 _amountToReduceSU = _amountToReduce;
-        require(fundedAmount[_id][msg.sender] >= _amountToReduceSU, "Amount funded less than withdrawal amount.");
+        require(fundedAmount[_id][msg.sender] >= _amountToReduce, "Amount funded less than withdrawal amount.");
 
-        fundedAmount[_id][msg.sender] -= _amountToReduceSU;
+        fundedAmount[_id][msg.sender] -= _amountToReduce;
 
-        tkn.transfer(msg.sender, _amountToReduceSU);
-        thisProject.currentAmount -= uint128(_amountToReduceSU);
+        tkn.transfer(msg.sender, _amountToReduce);
+        thisProject.currentAmount -= uint128(_amountToReduce);
     }
 
     // Withdraw all funded money
-    function reduceFunding(uint256 _id) external notEnded(_id) {
+    /*function reduceFunding(uint256 _id) external notEnded(_id) {
         uint256 totalFunded = fundedAmount[_id][msg.sender];
         reduceFunding(_id, totalFunded);
-    }
+    }*/
 
     function claimRefund(uint256 _id) external canRefund(_id) {
         Project storage thisProject = projects[_id];
+
         uint256 refundAmount = fundedAmount[_id][msg.sender];
         fundedAmount[_id][msg.sender] = 0;
         tkn.transfer(msg.sender, refundAmount);
