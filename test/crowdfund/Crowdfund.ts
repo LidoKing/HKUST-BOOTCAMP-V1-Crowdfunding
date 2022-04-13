@@ -116,5 +116,21 @@ describe("Unit tests", function () {
       let project = await this.cf.projects(0);
       expect(project.currentAmount).to.equal(0);
     });
+
+    it("should allow reduction of funding", async function () {
+      // Create project
+      let goal: BigNumberish = su("500");
+      await this.cf.connect(this.signers.admin).createProject(goal, 10);
+      // Fund project
+      let amount: BigNumberish = su("400");
+      await this.tkn.connect(this.signers.signer1).approve(this.cf.address, amount);
+      await this.cf.connect(this.signers.signer1).fundProject(0, amount);
+      // Reduce Funding
+      let reduceAmount1: BigNumberish = su("100");
+      await this.cf.connect(this.signers.signer1).reduceFunding(0, reduceAmount1);
+      let project = await this.cf.projects(0);
+      expect(project.currentAmount).to.equal(su("300"));
+      await expect(this.cf.connect(this.signers.signer1).reduceFunding(0, amount)).to.be.reverted;
+    });
   });
 });
