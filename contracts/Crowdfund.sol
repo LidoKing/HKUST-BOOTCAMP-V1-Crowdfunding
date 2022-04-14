@@ -124,10 +124,10 @@ contract Crowdfund {
     }
 
     // Withdraw all funded money
-    /*function reduceFunding(uint256 _id) external notEnded(_id) {
+    function reduceFunding(uint256 _id) external notEnded(_id) {
         uint256 totalFunded = fundedAmount[_id][msg.sender];
         reduceFunding(_id, totalFunded);
-    }*/
+    }
 
     function claimRefund(uint256 _id) external canRefund(_id) {
         Project storage thisProject = projects[_id];
