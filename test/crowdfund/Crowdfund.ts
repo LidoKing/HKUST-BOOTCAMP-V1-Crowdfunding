@@ -117,7 +117,7 @@ describe("Unit tests", function () {
       expect(project.currentAmount).to.equal(0);
     });
 
-    it("should allow reduction of funding", async function () {
+    it("should withdraw all funds for 1 param and assigned amount for 2 params", async function () {
       // Create project
       let goal: BigNumberish = su("500");
       await this.cf.connect(this.signers.admin).createProject(goal, 10);
@@ -127,10 +127,10 @@ describe("Unit tests", function () {
       await this.cf.connect(this.signers.signer1).fundProject(0, amount);
       // Reduce Funding
       let reduceAmount1: BigNumberish = su("100");
-      await this.cf.connect(this.signers.signer1).reduceFunding(0, reduceAmount1);
+      await this.cf.connect(this.signers.signer1)["reduceFunding(uint256,uint256)"](0, reduceAmount1);
+      await this.cf.connect(this.signers.signer1)["reduceFunding(uint256)"](0);
       let project = await this.cf.projects(0);
-      expect(project.currentAmount).to.equal(su("300"));
-      await expect(this.cf.connect(this.signers.signer1).reduceFunding(0, amount)).to.be.reverted;
+      expect(project.currentAmount).to.equal(0);
     });
   });
 });
