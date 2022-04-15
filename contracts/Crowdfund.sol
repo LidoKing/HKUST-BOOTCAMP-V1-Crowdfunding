@@ -71,7 +71,7 @@ contract Crowdfund {
     }*/
 
     function createProject(uint256 _goal, uint256 _periodInDays) external {
-        Project memory newProject = Project(
+        projects[projectId] = Project(
             payable(msg.sender),
             0,
             uint128(_goal),
@@ -80,8 +80,6 @@ contract Crowdfund {
             uint64(block.timestamp + _periodInDays * 1 days),
             0
         );
-
-        projects[projectId] = newProject;
         projectId++;
     }
 
@@ -92,7 +90,6 @@ contract Crowdfund {
         enoughBalance(_amount)
     {
         Project storage thisProject = projects[_id];
-
         tkn.transferFrom(msg.sender, address(this), _amount);
         thisProject.currentAmount += uint128(_amount);
         // Will not increase same funder more than once
