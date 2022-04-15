@@ -6,6 +6,12 @@ pragma solidity >=0.8.4 <0.9.0;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract Crowdfund {
+    event New(uint256 id, address indexed creator, uint256 goal, uint256 periodInDays);
+    event Fund(uint256 indexed id, address indexed funder, uint256 amount);
+    event Withdraw(uint256 indexed id, address indexed withdrawer, uint256 amount);
+    event Claim(uint256 id);
+    event Refund(uint256 indexed id, address funder, uint256 amount);
+
     uint256 projectId;
     //IDAIToken dai;
     IERC20 tkn;
@@ -80,6 +86,7 @@ contract Crowdfund {
             uint64(block.timestamp + _periodInDays * 1 days),
             0
         );
+        emit New(projectId, msg.sender, _goal, _periodInDays);
         projectId++;
     }
 
@@ -98,6 +105,7 @@ contract Crowdfund {
         }
         hasFunded[_id][msg.sender] = true;
         fundedAmount[_id][msg.sender] += _amount;
+        emit Fund(_id, msg.sender, _amount);
     }
 
     function claimFunds(uint256 _id) external canClaim(_id) {
@@ -107,6 +115,7 @@ contract Crowdfund {
 
         tkn.transfer(msg.sender, amount);
         thisProject.claimed = uint128(amount);
+        emit Claim(_id);
     }
 
     // Withdraw some funded money
@@ -118,6 +127,7 @@ contract Crowdfund {
 
         tkn.transfer(msg.sender, _amountToReduce);
         thisProject.currentAmount -= uint128(_amountToReduce);
+        emit Withdraw(_id, msg.sender, _amountToReduce);
     }
 
     // Withdraw all funded money
@@ -133,5 +143,6 @@ contract Crowdfund {
         fundedAmount[_id][msg.sender] = 0;
         tkn.transfer(msg.sender, refundAmount);
         thisProject.currentAmount -= uint128(refundAmount);
+        emit Refund(_id, msg.sender, refundAmount);
     }
 }
