@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: UNLICENSED
+
 pragma solidity >=0.8.4 <0.9.0;
 
 import "./Crowdfund.sol";
@@ -21,5 +23,15 @@ contract Initiation is Crowdfund {
         uint256 _id,
         uint256[] calldata _deadlines,
         uint256[] calldata _fundAllocation
-    ) external canClaim(_id) {}
+    ) external canClaim(_id) {
+        require(_deadlines.length == _fundAllocation.length, "Unmatched number of phases.");
+        State storage thisState = projectState[_id];
+        thisState.phases = _deadlines.length;
+        thisState.currentPhase = 0;
+
+        for (uint256 i = 0; i <= _deadlines.length; i++) {
+            thisState.phaseDeadline[i + 1] = _deadlines[i];
+            thisState.fundForPhase[i + 1] = _fundAllocation[i];
+        }
+    }
 }
