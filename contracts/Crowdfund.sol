@@ -26,7 +26,17 @@ contract Crowdfund {
         uint128 claimed; //pack 3
     }
 
+    // State is initiated through "initiateDevelopment(...)" by project creator once funding is completed
+    // Phase 0: approve development arrangements and fund allocation
+    struct State {
+        uint256 phases;
+        uint256 currentPhase;
+        mapping(uint256 => uint256) phaseDeadline;
+        mapping(uint256 => uint256) fundForPhase;
+    }
+
     mapping(uint256 => Project) public projects;
+    mapping(Project => State) projectState;
     mapping(uint256 => mapping(address => bool)) hasFunded;
     mapping(uint256 => mapping(address => uint256)) fundedAmount;
 
