@@ -102,8 +102,8 @@ contract Crowdfund {
         // Will not increase same funder more than once
         if (hasFunded[_id][msg.sender] == false) {
             thisProject.funders++;
+            hasFunded[_id][msg.sender] = true;
         }
-        hasFunded[_id][msg.sender] = true;
         fundedAmount[_id][msg.sender] += _amount;
         emit Fund(_id, msg.sender, _amount);
     }
