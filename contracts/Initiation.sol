@@ -23,7 +23,7 @@ contract Initiation is Crowdfund {
         uint256 _id,
         uint256[] calldata _deadlines,
         uint256[] calldata _fundAllocation
-    ) external canClaim(_id) {
+    ) external initiable(_id) {
         require(_deadlines.length == _fundAllocation.length, "Unmatched number of phases.");
         // Declaration for structs with mappings
         State storage thisState = projectState[_id];
