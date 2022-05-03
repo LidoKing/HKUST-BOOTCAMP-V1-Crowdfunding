@@ -26,17 +26,7 @@ contract Crowdfund {
         uint128 claimed; //pack 3
     }
 
-    // State is initiated through "initiateDevelopment(...)" by project creator once funding is completed
-    // Phase 0: approve development arrangements and fund allocation
-    struct State {
-        uint256 phases;
-        uint256 currentPhase;
-        mapping(uint256 => uint256) phaseDeadline;
-        mapping(uint256 => uint256) fundForPhase;
-    }
-
     mapping(uint256 => Project) public projects;
-    mapping(Project => State) projectState;
     mapping(uint256 => mapping(address => bool)) hasFunded;
     mapping(uint256 => mapping(address => uint256)) fundedAmount;
 
@@ -118,7 +108,7 @@ contract Crowdfund {
         emit Fund(_id, msg.sender, _amount);
     }
 
-    function claimFunds(uint256 _id) external canClaim(_id) {
+    /*function claimFunds(uint256 _id) external canClaim(_id) {
         Project storage thisProject = projects[_id];
         uint256 amount = thisProject.currentAmount;
         thisProject.currentAmount = 0;
@@ -126,7 +116,7 @@ contract Crowdfund {
         tkn.transfer(msg.sender, amount);
         thisProject.claimed = uint128(amount);
         emit Claim(_id);
-    }
+    }*/
 
     // Withdraw some funded money
     function reduceFunding(uint256 _id, uint256 _amountToReduce) public notEnded(_id) {
