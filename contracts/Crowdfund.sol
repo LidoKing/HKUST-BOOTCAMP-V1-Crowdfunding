@@ -30,7 +30,7 @@ contract Crowdfund {
     mapping(uint256 => mapping(address => bool)) hasFunded;
     mapping(uint256 => mapping(address => uint256)) fundedAmount;
 
-    modifier canRefund(uint256 _id) {
+    modifier refundable(uint256 _id) {
         Project memory thisProject = projects[_id];
         require(block.timestamp >= thisProject.endTime, "Funding of this project has not ended.");
         require(thisProject.currentAmount < thisProject.goal, "Funding goal has been reached, refund not allowed.");
@@ -38,7 +38,7 @@ contract Crowdfund {
         _;
     }
 
-    modifier canClaim(uint256 _id) {
+    modifier initiable(uint256 _id) {
         Project memory thisProject = projects[_id];
         require(thisProject.creator == msg.sender, "You are not the creator of the project.");
         require(block.timestamp >= thisProject.endTime, "Funding of this project has not ended.");
@@ -108,7 +108,7 @@ contract Crowdfund {
         emit Fund(_id, msg.sender, _amount);
     }
 
-    /*function claimFunds(uint256 _id) external canClaim(_id) {
+    /*function claimFunds(uint256 _id) external initiable(_id) {
         Project storage thisProject = projects[_id];
         uint256 amount = thisProject.currentAmount;
         thisProject.currentAmount = 0;
@@ -124,7 +124,6 @@ contract Crowdfund {
         require(fundedAmount[_id][msg.sender] >= _amountToReduce, "Amount funded less than withdrawal amount.");
 
         fundedAmount[_id][msg.sender] -= _amountToReduce;
-
         tkn.transfer(msg.sender, _amountToReduce);
         thisProject.currentAmount -= uint128(_amountToReduce);
         emit Withdraw(_id, msg.sender, _amountToReduce);
@@ -136,7 +135,7 @@ contract Crowdfund {
         reduceFunding(_id, totalFunded);
     }*/
 
-    function claimRefund(uint256 _id) external canRefund(_id) {
+    function claimRefund(uint256 _id) external refundable(_id) {
         Project storage thisProject = projects[_id];
 
         uint256 refundAmount = fundedAmount[_id][msg.sender];
