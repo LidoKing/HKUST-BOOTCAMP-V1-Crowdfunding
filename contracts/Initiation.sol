@@ -17,6 +17,7 @@ contract Initiation is Crowdfund {
         mapping(uint256 => uint256) currentVotes;
         mapping(uint256 => uint256) phaseDeadline;
         mapping(uint256 => uint256) fundForPhase;
+        mapping(uint256 => bool) phaseClaimed;
     }
 
     // porjectId -> project state
@@ -62,9 +63,21 @@ contract Initiation is Crowdfund {
         }
     }
 
-    /*function initiateDevelopment(uint _id) external {
+    function initiateDevelopment(uint256 _id) external proceed(_id, 1) {
+        State storage thisState = projectState[_id];
+        thisState.currentPhase = 1;
+        _claimFunds(_id, 1);
+    }
 
-    }*/
+    function _claimFunds(uint256 _id, uint256 _phase) private {
+        Project storage thisProject = projects[_id];
+        State storage thisState = projectState[_id];
+        require(thisState.phaseClaimed[_phase] == false, "Funds for this phase has already been claimed.");
+        thisState.phaseClaimed[_phase] = true;
+        uint256 amount = thisState.fundForPhase[_phase];
+        tkn.transfer(msg.sender, amount);
+        thisProject.currentAmount -= uint128(amount);
+    }
 
     function phaseDetail(uint256 _id, uint256 _phase) public view returns (uint256, uint256) {
         State storage thisState = projectState[_id];
