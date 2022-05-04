@@ -38,14 +38,6 @@ contract Crowdfund {
         _;
     }
 
-    modifier initiable(uint256 _id) {
-        Project memory thisProject = projects[_id];
-        require(thisProject.creator == msg.sender, "You are not the creator of the project.");
-        require(block.timestamp >= thisProject.endTime, "Funding of this project has not ended.");
-        require(thisProject.currentAmount >= thisProject.goal, "Funding goal is not reached.");
-        _;
-    }
-
     modifier notEnded(uint256 _id) {
         Project memory thisProject = projects[_id];
         require(block.timestamp < thisProject.endTime, "Project has ended funding");
