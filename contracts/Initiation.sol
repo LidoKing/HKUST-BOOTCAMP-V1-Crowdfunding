@@ -13,6 +13,7 @@ contract Initiation is Crowdfund {
         uint8 phases;
         uint8 currentPhase;
         uint128 totalVotes;
+        uint128 threshold;
         mapping(uint256 => uint256) currentVotes;
         mapping(uint256 => uint256) phaseDeadline;
         mapping(uint256 => uint256) fundForPhase;
@@ -29,7 +30,15 @@ contract Initiation is Crowdfund {
         _;
     }
 
-    modifier proceed(uint256 _id) {}
+    modifier proceed(uint256 _id, uint256 _phase) {
+        Project memory thisProject = projects[_id];
+        // Only valid in storage due to presence of mappings
+        State storage thisState = projectState[_id];
+        require(thisProject.creator == msg.sender, "You are not the creator of the project.");
+        require(thisState.currentVotes[_phase - 1] >= thisState.threshold, "Previous phase not approved.");
+        require(block.timestamp > thisState.phaseDeadline[_phase - 1], "Previous phase has not ended.");
+        _;
+    }
 
     function proposeDevelopment(
         uint256 _id,
@@ -40,9 +49,10 @@ contract Initiation is Crowdfund {
         Project memory thisProject = projects[_id];
         // Declaration for structs with mappings
         State storage thisState = projectState[_id];
-        thisState.phases = _deadlines.length;
+        thisState.phases = uint8(_deadlines.length);
         thisState.currentPhase = 0;
         thisState.totalVotes = thisProject.currentAmount;
+        thisState.threshold = (thisState.totalVotes / 100) * 80;
         thisState.currentVotes[0] = thisState.totalVotes;
         thisState.phaseDeadline[0] = block.timestamp + 2 days;
 
@@ -57,7 +67,7 @@ contract Initiation is Crowdfund {
     }*/
 
     function phaseDetail(uint256 _id, uint256 _phase) public view returns (uint256, uint256) {
-        State memory thisState = projectState[_id];
+        State storage thisState = projectState[_id];
         require(uint8(_phase) <= thisState.phases);
         return (thisState.phaseDeadline[_phase], thisState.fundForPhase[_phase]);
     }
