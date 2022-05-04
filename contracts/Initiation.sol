@@ -54,7 +54,7 @@ contract Initiation is Crowdfund {
         thisState.currentPhase = 0;
         thisState.totalVotes = thisProject.currentAmount;
         thisState.threshold = (thisState.totalVotes / 100) * 80;
-        thisState.currentVotes[0] = thisState.totalVotes;
+        thisState.currentVotes[0] = 0;
         thisState.phaseDeadline[0] = block.timestamp + 2 days;
 
         for (uint256 i = 0; i <= _deadlines.length; i++) {
@@ -66,7 +66,15 @@ contract Initiation is Crowdfund {
     function initiateDevelopment(uint256 _id) external proceed(_id, 1) {
         State storage thisState = projectState[_id];
         thisState.currentPhase = 1;
+        thisState.currentVotes[1] = 0;
         _claimFunds(_id, 1);
+    }
+
+    function nextPhase(uint256 _id, uint256 _phase) external proceed(_id, _phase) {
+        State storage thisState = projectState[_id];
+        thisState.currentPhase = uint8(_phase);
+        thisState.currentVotes[_phase] = 0;
+        _claimFunds(_id, _phase);
     }
 
     function _claimFunds(uint256 _id, uint256 _phase) private {
