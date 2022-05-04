@@ -5,8 +5,6 @@ pragma solidity >=0.8.4 <0.9.0;
 import "./Crowdfund.sol";
 
 contract Initiation is Crowdfund {
-    constructor(address _tokenAddress) Crowdfund(_tokenAddress) {}
-
     // State is initiated through "initiateDevelopment(...)" by project creator once funding is completed
     // Phase 0: approve development arrangements and fund allocation
     struct State {
