@@ -30,16 +30,36 @@ contract Crowdfund {
     mapping(uint256 => mapping(address => bool)) hasFunded;
     mapping(uint256 => mapping(address => uint256)) fundedAmount;
 
-    modifier refundable(uint256 _id) {
-        Project memory thisProject = projects[_id];
+    mapping(uint256 => uint256) totalSupply;
+
+    function _mint(
+        uint256 _projectId,
+        address _to,
+        uint256 _amount
+    ) private {
+        fundedAmount[_projectId][_to] += _amount;
+        totalSupply[_projectId] += _amount;
+    }
+
+    function _burn(
+        uint256 _projectId,
+        address _from,
+        uint256 _amount
+    ) private {
+        fundedAmount[_projectId][_from] -= _amount;
+        totalSupply[_projectId] -= _amount;
+    }
+
+    modifier refundable(uint256 _projectId) {
+        Project memory thisProject = projects[_projectId];
         require(block.timestamp >= thisProject.endTime, "Funding of this project has not ended.");
         require(thisProject.currentAmount < thisProject.goal, "Funding goal has been reached, refund not allowed.");
-        require(fundedAmount[_id][msg.sender] != 0, "You never funded this project / Refund already claimed.");
+        require(fundedAmount[_projectId][msg.sender] != 0, "You never funded this project / Refund already claimed.");
         _;
     }
 
-    modifier notEnded(uint256 _id) {
-        Project memory thisProject = projects[_id];
+    modifier notEnded(uint256 _projectId) {
+        Project memory thisProject = projects[_projectId];
         require(block.timestamp < thisProject.endTime, "Project has ended funding");
         _;
     }
@@ -79,58 +99,58 @@ contract Crowdfund {
         projectId++;
     }
 
-    function fundProject(uint256 _id, uint256 _amount)
+    function fundProject(uint256 _projectId, uint256 _amount)
         external
-        notEnded(_id)
+        notEnded(_projectId)
         approvedEnough(_amount)
         enoughBalance(_amount)
     {
-        Project storage thisProject = projects[_id];
+        Project storage thisProject = projects[_projectId];
         tkn.transferFrom(msg.sender, address(this), _amount);
         thisProject.currentAmount += uint128(_amount);
         // Will not increase same funder more than once
-        if (hasFunded[_id][msg.sender] == false) {
+        if (hasFunded[_projectId][msg.sender] == false) {
             thisProject.funders++;
-            hasFunded[_id][msg.sender] = true;
+            hasFunded[_projectId][msg.sender] = true;
         }
-        fundedAmount[_id][msg.sender] += _amount;
-        emit Fund(_id, msg.sender, _amount);
+        fundedAmount[_projectId][msg.sender] += _amount;
+        emit Fund(_projectId, msg.sender, _amount);
     }
 
-    /*function claimFunds(uint256 _id) external initiable(_id) {
-        Project storage thisProject = projects[_id];
+    /*function claimFunds(uint256 _projectId) external initiable(_projectId) {
+        Project storage thisProject = projects[_projectId];
         uint256 amount = thisProject.currentAmount;
         thisProject.currentAmount = 0;
 
         tkn.transfer(msg.sender, amount);
         thisProject.claimed = uint128(amount);
-        emit Claim(_id);
+        emit Claim(_projectId);
     }*/
 
     // Withdraw some funded money
-    function reduceFunding(uint256 _id, uint256 _amountToReduce) public notEnded(_id) {
-        Project storage thisProject = projects[_id];
-        require(fundedAmount[_id][msg.sender] >= _amountToReduce, "Amount funded less than withdrawal amount.");
+    function reduceFunding(uint256 _projectId, uint256 _amountToReduce) public notEnded(_projectId) {
+        Project storage thisProject = projects[_projectId];
+        require(fundedAmount[_projectId][msg.sender] >= _amountToReduce, "Amount funded less than withdrawal amount.");
 
-        fundedAmount[_id][msg.sender] -= _amountToReduce;
+        fundedAmount[_projectId][msg.sender] -= _amountToReduce;
         tkn.transfer(msg.sender, _amountToReduce);
         thisProject.currentAmount -= uint128(_amountToReduce);
-        emit Withdraw(_id, msg.sender, _amountToReduce);
+        emit Withdraw(_projectId, msg.sender, _amountToReduce);
     }
 
     // Withdraw all funded money
-    /*function reduceFunding(uint256 _id) external notEnded(_id) {
-        uint256 totalFunded = fundedAmount[_id][msg.sender];
-        reduceFunding(_id, totalFunded);
+    /*function reduceFunding(uint256 _projectId) external notEnded(_projectId) {
+        uint256 totalFunded = fundedAmount[_projectId][msg.sender];
+        reduceFunding(_projectId, totalFunded);
     }*/
 
-    function claimRefund(uint256 _id) external refundable(_id) {
-        Project storage thisProject = projects[_id];
+    function claimRefund(uint256 _projectId) external refundable(_projectId) {
+        Project storage thisProject = projects[_projectId];
 
-        uint256 refundAmount = fundedAmount[_id][msg.sender];
-        fundedAmount[_id][msg.sender] = 0;
+        uint256 refundAmount = fundedAmount[_projectId][msg.sender];
+        fundedAmount[_projectId][msg.sender] = 0;
         tkn.transfer(msg.sender, refundAmount);
         thisProject.currentAmount -= uint128(refundAmount);
-        emit Refund(_id, msg.sender, refundAmount);
+        emit Refund(_projectId, msg.sender, refundAmount);
     }
 }
