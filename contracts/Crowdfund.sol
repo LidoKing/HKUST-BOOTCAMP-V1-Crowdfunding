@@ -30,6 +30,7 @@ contract Crowdfund {
     mapping(uint256 => mapping(address => bool)) hasFunded;
     mapping(uint256 => mapping(address => uint256)) fundedAmount;
 
+    // Refund amount is always a percetage of fund pool (fundedAmount/totalSupply)
     mapping(uint256 => uint256) totalSupply;
 
     function _mint(
@@ -113,7 +114,7 @@ contract Crowdfund {
             thisProject.funders++;
             hasFunded[_projectId][msg.sender] = true;
         }
-        fundedAmount[_projectId][msg.sender] += _amount;
+        _mint(_projectId, msg.sender, _amount);
         emit Fund(_projectId, msg.sender, _amount);
     }
 
@@ -132,8 +133,11 @@ contract Crowdfund {
         Project storage thisProject = projects[_projectId];
         require(fundedAmount[_projectId][msg.sender] >= _amountToReduce, "Amount funded less than withdrawal amount.");
 
-        fundedAmount[_projectId][msg.sender] -= _amountToReduce;
+        _burn(_projectId, msg.sender, _amountToReduce);
         tkn.transfer(msg.sender, _amountToReduce);
+        if (fundedAmount[_projectId][msg.sender] == 0) {
+            thisProject.funders--;
+        }
         thisProject.currentAmount -= uint128(_amountToReduce);
         emit Withdraw(_projectId, msg.sender, _amountToReduce);
     }
