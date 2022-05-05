@@ -21,18 +21,18 @@ contract Initiation is Crowdfund {
     // porjectId -> project state
     mapping(uint256 => State) projectState;
 
-    modifier initiable(uint256 _id) {
-        Project memory thisProject = projects[_id];
+    modifier initiable(uint256 _projectId) {
+        Project memory thisProject = projects[_projectId];
         require(thisProject.creator == msg.sender, "You are not the creator of the project.");
         require(block.timestamp >= thisProject.endTime, "Funding of this project has not ended.");
         require(thisProject.currentAmount >= thisProject.goal, "Funding goal is not reached.");
         _;
     }
 
-    modifier proceed(uint256 _id, uint256 _phase) {
-        Project memory thisProject = projects[_id];
+    modifier proceed(uint256 _projectId, uint256 _phase) {
+        Project memory thisProject = projects[_projectId];
         // Only valid in storage due to presence of mappings
-        State storage thisState = projectState[_id];
+        State storage thisState = projectState[_projectId];
         require(thisProject.creator == msg.sender, "You are not the creator of the project.");
         require(thisState.currentVotes[_phase - 1] >= thisState.threshold, "Previous phase not approved.");
         require(block.timestamp > thisState.phaseDeadline[_phase - 1], "Previous phase has not ended.");
@@ -40,14 +40,14 @@ contract Initiation is Crowdfund {
     }
 
     function proposeDevelopment(
-        uint256 _id,
+        uint256 _projectId,
         uint256[] calldata _deadlines,
         uint256[] calldata _fundAllocation
-    ) external initiable(_id) {
+    ) external initiable(_projectId) {
         require(_deadlines.length == _fundAllocation.length, "Unmatched number of phases.");
-        Project memory thisProject = projects[_id];
+        Project memory thisProject = projects[_projectId];
         // Declaration for structs with mappings
-        State storage thisState = projectState[_id];
+        State storage thisState = projectState[_projectId];
         thisState.phases = uint8(_deadlines.length);
         thisState.currentPhase = 0;
         thisState.totalVotes = thisProject.currentAmount;
@@ -61,23 +61,23 @@ contract Initiation is Crowdfund {
         }
     }
 
-    function initiateDevelopment(uint256 _id) external proceed(_id, 1) {
-        State storage thisState = projectState[_id];
+    function initiateDevelopment(uint256 _projectId) external proceed(_projectId, 1) {
+        State storage thisState = projectState[_projectId];
         thisState.currentPhase = 1;
         thisState.currentVotes[1] = 0;
-        _claimFunds(_id, 1);
+        _claimFunds(_projectId, 1);
     }
 
-    function nextPhase(uint256 _id, uint256 _phase) external proceed(_id, _phase) {
-        State storage thisState = projectState[_id];
+    function nextPhase(uint256 _projectId, uint256 _phase) external proceed(_projectId, _phase) {
+        State storage thisState = projectState[_projectId];
         thisState.currentPhase = uint8(_phase);
         thisState.currentVotes[_phase] = 0;
-        _claimFunds(_id, _phase);
+        _claimFunds(_projectId, _phase);
     }
 
-    function _claimFunds(uint256 _id, uint256 _phase) private {
-        Project storage thisProject = projects[_id];
-        State storage thisState = projectState[_id];
+    function _claimFunds(uint256 _projectId, uint256 _phase) private {
+        Project storage thisProject = projects[_projectId];
+        State storage thisState = projectState[_projectId];
         require(thisState.phaseClaimed[_phase] == false, "Funds for this phase has already been claimed.");
         thisState.phaseClaimed[_phase] = true;
         uint256 amount = thisState.fundForPhase[_phase];
@@ -85,9 +85,17 @@ contract Initiation is Crowdfund {
         thisProject.currentAmount -= uint128(amount);
     }
 
-    function phaseDetail(uint256 _id, uint256 _phase) public view returns (uint256, uint256) {
-        State storage thisState = projectState[_id];
+    function phaseDetail(uint256 _projectId, uint256 _phase)
+        public
+        view
+        returns (
+            uint256,
+            uint256,
+            uint256
+        )
+    {
+        State storage thisState = projectState[_projectId];
         require(uint8(_phase) <= thisState.phases);
-        return (thisState.phaseDeadline[_phase], thisState.fundForPhase[_phase]);
+        return (thisState.phaseDeadline[_phase], thisState.fundForPhase[_phase], thisState.currentVotes[_phase]);
     }
 }
