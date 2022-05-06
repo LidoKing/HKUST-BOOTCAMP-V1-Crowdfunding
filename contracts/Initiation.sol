@@ -7,7 +7,7 @@ import "./Crowdfund.sol";
 contract Initiation is Crowdfund {
     /**
      * @notice Phase 0: approve development arrangements and fund allocation
-     * @dev State is initiated through "initiateDevelopment(...)" by project creator once funding is completed
+     * @dev State is initiated through "proposeDevelopment(...)" by project creator once funding is completed
      */
     struct State {
         uint8 phases;
@@ -65,7 +65,8 @@ contract Initiation is Crowdfund {
         thisState.phaseDeadline[0] = block.timestamp + 2 days;
 
         for (uint256 i = 0; i <= _deadlines.length; i++) {
-            thisState.phaseDeadline[i + 1] = _deadlines[i];
+            // 5 days for voting
+            thisState.phaseDeadline[i + 1] = _deadlines[i] + 5 days;
             thisState.fundForPhase[i + 1] = _fundAllocation[i];
         }
     }
