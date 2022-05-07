@@ -86,6 +86,9 @@ contract Crowdfund {
         return _amount * (10 ** 18);
     }*/
 
+    /**
+     * @dev Initialize new project
+     */
     function createProject(uint256 _goal, uint256 _periodInDays) external {
         Project storage thisProject = projects[projectId];
         thisProject.creator = payable(msg.sender);
@@ -100,6 +103,9 @@ contract Crowdfund {
         projectId++;
     }
 
+    /**
+     * @dev Fund project and mint refund tokens
+     */
     function fundProject(uint256 _projectId, uint256 _amount)
         external
         notEnded(_projectId)
@@ -118,17 +124,9 @@ contract Crowdfund {
         emit Fund(_projectId, msg.sender, _amount);
     }
 
-    /*function claimFunds(uint256 _projectId) external initiable(_projectId) {
-        Project storage thisProject = projects[_projectId];
-        uint256 amount = thisProject.currentAmount;
-        thisProject.currentAmount = 0;
-
-        tkn.transfer(msg.sender, amount);
-        thisProject.claimed = uint128(amount);
-        emit Claim(_projectId);
-    }*/
-
-    // Withdraw some funded money
+    /**
+     * @dev Reduce funded amount, remove funder if all funded money is taken away
+     */
     function reduceFunding(uint256 _projectId, uint256 _amountToReduce) public notEnded(_projectId) {
         Project storage thisProject = projects[_projectId];
         require(thisProject.fundedAmount[msg.sender] >= _amountToReduce, "Amount funded less than withdrawal amount.");
@@ -148,6 +146,9 @@ contract Crowdfund {
         reduceFunding(_projectId, totalFunded);
     }*/
 
+    /**
+     * @dev Refund for funding phase
+     */
     function claimRefund(uint256 _projectId) external refundable(_projectId) {
         Project storage thisProject = projects[_projectId];
 
