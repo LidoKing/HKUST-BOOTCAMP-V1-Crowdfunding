@@ -10,7 +10,9 @@ contract Voting is Initiation {
     struct Proposal {
         uint64 voteStart;
         uint64 voteEnd;
+        // ID for next improvement proposal
         uint8 ipId;
+        bool reworked;
         mapping(uint256 => Improvement) improvements;
         // Voting types: 0 - For, 1 - Against, 2 - Abstain, 3 - Delegated
         mapping(address => uint256) voteType;
@@ -26,7 +28,11 @@ contract Voting is Initiation {
 
     // project ID -> phase -> proposal
     mapping(uint256 => mapping(uint256 => Proposal)) proposals;
+    mapping(uint256 => mapping(uint256 => Proposal)) reworks;
 
+    /**
+     * @dev Caller is project creator, fundign has ended, funding goal reached
+     */
     modifier initiable(uint256 _projectId) {
         Project storage thisProject = projects[_projectId];
         require(thisProject.creator == msg.sender, "You are not the creator of the project.");
@@ -35,11 +41,13 @@ contract Voting is Initiation {
         _;
     }
 
+    /**
+     * @dev Caller is project creator, previous phase has ended
+     */
     modifier proceed(uint256 _projectId, uint256 _toPhase) {
-        Project storage thisProject = projects[_projectId];
         // Only valid in storage due to presence of mappings
         Phase storage prevPhase = projectState[_projectId].phases[_toPhase - 1];
-        require(thisProject.creator == msg.sender, "You are not the creator of the project.");
+        require(projects[_projectId].creator == msg.sender, "You are not the creator of the project.");
         require(uint64(block.timestamp) > prevPhase.deadline, "Previous phase has not ended.");
         _;
     }
@@ -65,11 +73,24 @@ contract Voting is Initiation {
     /**
      * @dev Proposal initialization
      */
-    function _initializeProposal(uint256 _projectId, uint256 _phase) private {
-        Proposal storage thisProposal = proposals[_projectId][_phase];
-        thisProposal.voteStart = uint64(block.timestamp);
-        thisProposal.voteEnd = uint64(block.timestamp) + votingPeriod;
-        thisProposal.ipId = 0;
+    function _initializeProposal(
+        uint256 _projectId,
+        uint256 _phase,
+        bool _rework
+    ) private {
+        if (_rework) {
+            Proposal storage thisProposal = reworks[_projectId][_phase];
+            thisProposal.voteStart = uint64(block.timestamp);
+            thisProposal.voteEnd = uint64(block.timestamp) + votingPeriod;
+            thisProposal.ipId = 0;
+            thisProposal.reworked = false;
+        } else {
+            Proposal storage thisProposal = proposals[_projectId][_phase];
+            thisProposal.voteStart = uint64(block.timestamp);
+            thisProposal.voteEnd = uint64(block.timestamp) + votingPeriod;
+            thisProposal.ipId = 0;
+            thisProposal.reworked = false;
+        }
     }
 
     /**
@@ -84,7 +105,7 @@ contract Voting is Initiation {
         // Deadlines and fund allocations plan
         _initializeState(_projectId, _deadlines, _fundAllocation);
         // Start voting for proposal
-        _initializeProposal(_projectId, 0);
+        _initializeProposal(_projectId, 0, false);
     }
 
     /**
@@ -92,7 +113,7 @@ contract Voting is Initiation {
      */
     function phaseProposal(uint256 _projectId, uint256 _phase) external proceed(_projectId, _phase) {
         // Start voting for proposal
-        _initializeProposal(_projectId, _phase);
+        _initializeProposal(_projectId, _phase, false);
     }
 
     function _updateVote(
@@ -157,6 +178,34 @@ contract Voting is Initiation {
         }
     }
 
+    /**
+     * @notice Creator has 2 days, upon completion of voting, to submit a revamp of proposal if it was not approved
+     * @dev Initiate new voting round and push deadline of remaining phases
+     */
+    function revampProposal(uint256 _projectId, uint256 _phase) external {
+        Proposal storage thisProposal = proposals[_projectId][_phase];
+        require(msg.sender == projects[_projectId].creator, "You are not the creator of the project.");
+        require(thisProposal.reworked == false, "Proposal has been reworked for once already.");
+        // Period for submission of revemped proposal
+        require(
+            uint64(block.timestamp) > thisProposal.voteEnd &&
+                uint64(block.timestamp) <= thisProposal.voteEnd + uint64(2 days),
+            "Period of submitting rework of proposal has passed."
+        );
+        thisProposal.reworked = true;
+        _initializeProposal(_projectId, _phase, true);
+
+        // Push deadline by 7 days for following phases
+        uint256 counter = projectState[_projectId].totalPhases;
+        for (uint256 i = _phase; i <= counter; i++) {
+            // 2 days for submitting rewoek of proposal and 5 days for voting
+            projectState[_projectId].phases[i].deadline += uint64(7 days);
+        }
+    }
+
+    /**
+     * @dev Get all suggested improvements
+     */
     function getImprovements(uint256 _projectId, uint256 _phase) external view returns (string[] memory) {
         Proposal storage thisProposal = proposals[_projectId][_phase];
         string[] memory result = new string[](thisProposal.ipId);
