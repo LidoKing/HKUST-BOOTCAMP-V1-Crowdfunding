@@ -22,7 +22,6 @@ contract Voting is Initiation {
 
     struct Improvement {
         string ipDetail;
-        bool adopted;
     }
 
     // project ID -> phase -> proposal
@@ -156,5 +155,14 @@ contract Voting is Initiation {
             uint256 delegateeType = thisProposal.voteType[_delegatee];
             thisProposal.typeTrack[delegateeType] += delegateAmount;
         }
+    }
+
+    function getImprovements(uint256 _projectId, uint256 _phase) external view returns (string[] memory) {
+        Proposal storage thisProposal = proposals[_projectId][_phase];
+        string[] memory result = new string[](thisProposal.ipId);
+        for (uint256 i = 0; i < thisProposal.ipId; i++) {
+            result[i] = thisProposal.improvements[i].ipDetail;
+        }
+        return result;
     }
 }
