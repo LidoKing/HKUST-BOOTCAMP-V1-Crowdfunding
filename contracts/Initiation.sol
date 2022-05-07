@@ -21,7 +21,6 @@ contract Initiation is Crowdfund {
     struct Phase {
         uint64 deadline;
         uint128 fundAllocated;
-        bool claimable;
         bool claimed;
     }
 
@@ -65,13 +64,9 @@ contract Initiation is Crowdfund {
     /**
      * @dev Claim allocated funds for the corresponding phase
      */
-    function claimFunds(uint256 _projectId, uint256 _phase) external {
+    function _claimPhase(uint256 _projectId, uint256 _phase) internal {
         Project storage thisProject = projects[_projectId];
         Phase storage thisPhase = projectState[_projectId].phases[_phase];
-        // Check if voting period has passed
-        require((projectState[_projectId].phases[_phase - 1].deadline + 5 days) < uint128(block.timestamp));
-        require(thisPhase.claimable == true, "Proposal not passed.");
-        require(thisPhase.claimed == false, "Funds for this phase has already been claimed.");
         thisPhase.claimed = true;
         uint128 amount = thisPhase.fundAllocated;
         tkn.transfer(msg.sender, amount);

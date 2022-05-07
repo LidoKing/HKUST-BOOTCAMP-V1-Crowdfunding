@@ -70,6 +70,44 @@ contract Voting is Initiation {
         _;
     }
 
+    modifier claimable(
+        uint256 _projectId,
+        uint256 _phase,
+        address _claimer
+    ) {
+        Proposal storage thisProposal = proposals[_projectId][_phase];
+        require(msg.sender == projects[_projectId].creator, "You are not the creator of the project.");
+        require(
+            projectState[_projectId].phases[_phase].claimed == false,
+            "Funds for this phase has already been claimed."
+        );
+        if (thisProposal.reworked == true) {
+            Proposal storage thisReworked = reworks[_projectId][_phase];
+            require(thisReworked.voteEnd < uint64(block.timestamp), "Voting period has not ended");
+            require(
+                uint128(thisReworked.typeTrack[0] + thisReworked.typeTrack[1] + thisReworked.typeTrack[2]) ==
+                    projectState[_projectId].totalVotes,
+                "Unequal total votes, abnormality detected."
+            );
+            require(
+                uint128(thisReworked.typeTrack[0]) >= projectState[_projectId].threshold,
+                "Reworked proposal rejected, development terminated"
+            );
+        } else {
+            require(thisProposal.voteEnd < uint64(block.timestamp), "Voting period has not ended");
+            require(
+                uint128(thisProposal.typeTrack[0] + thisProposal.typeTrack[1] + thisProposal.typeTrack[2]) ==
+                    projectState[_projectId].totalVotes,
+                "Unequal total votes, abnormality detected."
+            );
+            require(
+                uint128(thisProposal.typeTrack[0]) >= projectState[_projectId].threshold,
+                "Proposal rejected, submission of rework of proposal is expected."
+            );
+        }
+        _;
+    }
+
     /**
      * @dev Proposal initialization
      */
@@ -182,7 +220,7 @@ contract Voting is Initiation {
      * @notice Creator has 2 days, upon completion of voting, to submit a revamp of proposal if it was not approved
      * @dev Initiate new voting round and push deadline of remaining phases
      */
-    function revampProposal(uint256 _projectId, uint256 _phase) external {
+    function reworkProposal(uint256 _projectId, uint256 _phase) external {
         Proposal storage thisProposal = proposals[_projectId][_phase];
         require(msg.sender == projects[_projectId].creator, "You are not the creator of the project.");
         require(thisProposal.reworked == false, "Proposal has been reworked for once already.");
@@ -201,6 +239,13 @@ contract Voting is Initiation {
             // 2 days for submitting rewoek of proposal and 5 days for voting
             projectState[_projectId].phases[i].deadline += uint64(7 days);
         }
+    }
+
+    /**
+     * @dev Fund claim with voting and time condition check
+     */
+    function claimFunds(uint256 _projectId, uint256 _phase) external claimable(_projectId, _phase, msg.sender) {
+        _claimPhase(_projectId, _phase);
     }
 
     /**
