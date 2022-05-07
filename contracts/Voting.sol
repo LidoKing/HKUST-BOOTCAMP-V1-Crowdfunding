@@ -8,7 +8,8 @@ contract Voting is Initiation {
     constructor(address _tokenAddress) Initiation(_tokenAddress) {}
 
     struct Proposal {
-        uint64 time;
+        uint64 voteStart;
+        uint64 voteEnd;
         uint8 ipId;
         mapping(uint256 => Improvement) improvements;
         // Voting types: 0 - For, 1 - Against, 2 - Abstain, 3 - Delegated
@@ -27,6 +28,23 @@ contract Voting is Initiation {
     // project ID -> phase -> proposal
     mapping(uint256 => mapping(uint256 => Proposal)) proposals;
 
+    modifier initiable(uint256 _projectId) {
+        Project storage thisProject = projects[_projectId];
+        require(thisProject.creator == msg.sender, "You are not the creator of the project.");
+        require(uint64(block.timestamp) >= thisProject.endTime, "Funding of this project has not ended.");
+        require(thisProject.currentAmount >= thisProject.goal, "Funding goal is not reached.");
+        _;
+    }
+
+    modifier proceed(uint256 _projectId, uint256 _toPhase) {
+        Project storage thisProject = projects[_projectId];
+        // Only valid in storage due to presence of mappings
+        Phase storage prevPhase = projectState[_projectId].phases[_toPhase - 1];
+        require(thisProject.creator == msg.sender, "You are not the creator of the project.");
+        require(uint64(block.timestamp) > prevPhase.deadline, "Previous phase has not ended.");
+        _;
+    }
+
     /**
      * @dev Prerequisites for voting: funded project, have not voted, before phase deadline
      */
@@ -35,24 +53,48 @@ contract Voting is Initiation {
         uint256 _phase,
         address _funder
     ) {
-        Phase storage thisPhase = projectState[_projectId].phases[_phase];
-        require(block.timestamp <= thisPhase.deadline, "Voting for this phase has ended.");
+        Proposal storage thisProposal = proposals[_projectId][_phase];
+        require(
+            uint64(block.timestamp) >= thisProposal.voteStart && uint64(block.timestamp) <= thisProposal.voteEnd,
+            "Not within voting period"
+        );
         require(projects[_projectId].hasFunded[msg.sender] == true, "You did not fund this project.");
         require(proposals[_projectId][_phase].voted[msg.sender] == false, "You have already voted.");
         _;
     }
 
     /**
-     * @dev Passive registration for voting power when casting vote
+     * @dev Proposal initialization
      */
-    /*function _register(uint256 _projectId, uint256 _phase, address _funder) private {
-        power[_projectId][_phase][_funder] = fundedAmount[_projectId][_phase][_funder];
-    }*/
+    function _initializeProposal(uint256 _projectId, uint256 _phase) private {
+        Proposal storage thisProposal = proposals[_projectId][_phase];
+        thisProposal.voteStart = uint64(block.timestamp);
+        thisProposal.voteEnd = uint64(block.timestamp) + votingPeriod;
+        thisProposal.ipId = 0;
+    }
 
-    /*function _updateVote(uint256 _projectId, address _funder, uint _type) {
-        voted[_projectId][_phase][_funder] = true;
-        typeTrack[_projectId][_phase][_type] += power[_funder];
-    }*/
+    /**
+     * @dev Start phase 0
+     */
+    function initiateDevelopment(
+        uint256 _projectId,
+        uint256[] calldata _deadlines,
+        uint256[] calldata _fundAllocation
+    ) external initiable(_projectId) {
+        require(_deadlines.length == _fundAllocation.length, "Unmatched number of phases.");
+        // Deadlines and fund allocations plan
+        _initializeState(_projectId, _deadlines, _fundAllocation);
+        // Start voting for proposal
+        _initializeProposal(_projectId, 0);
+    }
+
+    /**
+     * @dev Proceed to next phase
+     */
+    function phaseProposal(uint256 _projectId, uint256 _phase) external proceed(_projectId, _phase) {
+        // Start voting for proposal
+        _initializeProposal(_projectId, _phase);
+    }
 
     /**
      * @dev Cast vote (For, Against, Abstain)
