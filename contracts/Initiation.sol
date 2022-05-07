@@ -3,10 +3,9 @@
 pragma solidity >=0.8.4 <0.9.0;
 
 import "./Crowdfund.sol";
-import "./SharedStructs.sol";
 
 contract Initiation is Crowdfund {
-    using SS for *;
+    constructor(address _tokenAddress) Crowdfund(_tokenAddress) {}
 
     /**
      * @notice Phase 0: approve development arrangements and fund allocation
@@ -21,11 +20,10 @@ contract Initiation is Crowdfund {
     }
 
     struct Phase {
-        uint256 currentVotes;
         uint256 deadline;
         uint256 fundAllocated;
+        bool reachedThreshold;
         bool claimed;
-        SS.Proposal proposal;
     }
 
     /**
@@ -46,7 +44,7 @@ contract Initiation is Crowdfund {
         // Only valid in storage due to presence of mappings
         Phase storage thisPhase = projectState[_projectId].phases[_toPhase - 1];
         require(thisProject.creator == msg.sender, "You are not the creator of the project.");
-        require(thisPhase.currentVotes >= projectState[_projectId].threshold, "Previous phase not approved.");
+        require(thisPhase.reachedThreshold == true, "Previous phase not approved.");
         require(block.timestamp > thisPhase.deadline, "Previous phase has not ended.");
         _;
     }
@@ -70,12 +68,10 @@ contract Initiation is Crowdfund {
         thisState.currentPhase = 0;
         thisState.totalVotes = thisProject.currentAmount;
         thisState.threshold = (thisState.totalVotes / 100) * 80;
-        thisState.phases[0].currentVotes = 0;
         thisState.phases[0].deadline = block.timestamp + 2 days;
 
         for (uint256 i = 0; i <= _deadlines.length; i++) {
             Phase storage thisPhase = thisState.phases[i + 1];
-            thisPhase.currentVotes = 0;
             // 5 days for voting
             thisPhase.deadline = _deadlines[i] + 5 days;
             thisPhase.fundAllocated = _fundAllocation[i];
@@ -95,11 +91,12 @@ contract Initiation is Crowdfund {
     /**
      * @dev Proceed to next phase, claiming funds and initializing new round of voting
      */
+    /*
     function nextPhase(uint256 _projectId, uint256 _toPhase) external proceed(_projectId, _toPhase) {
         State storage thisState = projectState[_projectId];
         thisState.currentPhase = uint8(_toPhase);
         _claimFunds(_projectId, _toPhase);
-    }
+    }*/
 
     /**
      * @dev Claim allocated funds for the corresponding phase
@@ -123,11 +120,11 @@ contract Initiation is Crowdfund {
         returns (
             uint256,
             uint256,
-            uint256
+            bool
         )
     {
         Phase storage thisPhase = projectState[_projectId].phases[_phase];
         require(uint8(_phase) <= projectState[_projectId].totalPhases, "There is no such phase.");
-        return (thisPhase.deadline, thisPhase.fundAllocated, thisPhase.currentVotes);
+        return (thisPhase.deadline, thisPhase.fundAllocated, thisPhase.claimed);
     }
 }
