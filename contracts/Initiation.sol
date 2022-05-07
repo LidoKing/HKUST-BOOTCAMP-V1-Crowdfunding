@@ -11,7 +11,7 @@ contract Initiation is Crowdfund {
      * @dev State is initiated through "proposeDevelopment(...)" by project creator once funding is completed
      */
     struct State {
-        uint8 totalPhases;
+        uint8 totalPhases; // excluding phase 0
         uint8 currentPhase;
         uint128 totalVotes;
         uint128 threshold;
