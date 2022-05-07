@@ -46,7 +46,7 @@ contract Voting is Initiation {
     }
 
     /**
-     * @dev Prerequisites for voting: funded project, have not voted, before phase deadline
+     * @dev Prerequisites for voting: within voting period, funded project, have not voted
      */
     modifier votable(
         uint256 _projectId,
@@ -96,20 +96,43 @@ contract Voting is Initiation {
         _initializeProposal(_projectId, _phase);
     }
 
-    /**
-     * @dev Cast vote (For, Against, Abstain)
-     */
-    function vote(
+    function _updateVote(
         uint256 _projectId,
         uint256 _phase,
         uint256 _type
-    ) external votable(_projectId, _phase, msg.sender) {
+    ) private {
         Proposal storage thisProposal = proposals[_projectId][_phase];
         thisProposal.voted[msg.sender] = true;
         thisProposal.power[msg.sender] = projects[_projectId].fundedAmount[msg.sender];
         thisProposal.voteType[msg.sender] = _type;
         uint256 voteAmount = thisProposal.power[msg.sender];
         thisProposal.typeTrack[_type] += voteAmount;
+    }
+
+    /**
+     * @dev Cast vote (For, Abstain)
+     */
+    function vote(
+        uint256 _projectId,
+        uint256 _phase,
+        uint256 _type
+    ) external votable(_projectId, _phase, msg.sender) {
+        _updateVote(_projectId, _phase, _type);
+    }
+
+    /**
+     * @dev Cast vote (Agaisnt)
+     * @param _improvement - what should be added
+     */
+    function against(
+        uint256 _projectId,
+        uint256 _phase,
+        string calldata _improvement
+    ) external {
+        _updateVote(_projectId, _phase, 1);
+        Proposal storage thisProposal = proposals[_projectId][_phase];
+        thisProposal.improvements[thisProposal.ipId].ipDetail = _improvement;
+        thisProposal.ipId++;
     }
 
     /**
