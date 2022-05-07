@@ -151,7 +151,7 @@ contract Crowdfund {
     function claimRefund(uint256 _projectId) external refundable(_projectId) {
         Project storage thisProject = projects[_projectId];
 
-        uint256 refundAmount = (thisProject.fundedAmount[msg.sender] / totalSupply[_projectId]) *
+        uint256 refundAmount = (thisProject.fundedAmount[msg.sender] / thisProject.totalSupply) *
             thisProject.currentAmount;
         _burn(_projectId, msg.sender, refundAmount);
         tkn.transfer(msg.sender, refundAmount);
