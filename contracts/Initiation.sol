@@ -4,8 +4,6 @@ pragma solidity >=0.8.4 <0.9.0;
 import "./Crowdfund.sol";
 
 contract Initiation is Crowdfund {
-    constructor(address _tokenAddress) Crowdfund(_tokenAddress) {}
-
     /**
      * @notice Phase 0: approve development arrangements and fund allocation
      * @dev State is initiated through "proposeDevelopment(...)" by project creator once funding is completed
@@ -30,6 +28,25 @@ contract Initiation is Crowdfund {
      * @dev porjectId -> project state
      */
     mapping(uint256 => State) projectState;
+
+    constructor(address _tokenAddress) Crowdfund(_tokenAddress) {}
+
+    /**
+     * @dev Getter function for phase detail
+     */
+    function phaseDetail(uint256 _projectId, uint256 _phase)
+        public
+        view
+        returns (
+            uint64,
+            uint128,
+            bool
+        )
+    {
+        Phase storage thisPhase = projectState[_projectId].phases[_phase];
+        require(uint8(_phase) <= projectState[_projectId].totalPhases, "There is no such phase.");
+        return (thisPhase.deadline, thisPhase.fundAllocated, thisPhase.claimed);
+    }
 
     /**
      * @notice Submit plan for project before initiation
@@ -71,22 +88,5 @@ contract Initiation is Crowdfund {
         uint128 amount = thisPhase.fundAllocated;
         tkn.transfer(msg.sender, amount);
         thisProject.currentAmount -= amount;
-    }
-
-    /**
-     * @dev Getter function for phase detail
-     */
-    function phaseDetail(uint256 _projectId, uint256 _phase)
-        public
-        view
-        returns (
-            uint64,
-            uint128,
-            bool
-        )
-    {
-        Phase storage thisPhase = projectState[_projectId].phases[_phase];
-        require(uint8(_phase) <= projectState[_projectId].totalPhases, "There is no such phase.");
-        return (thisPhase.deadline, thisPhase.fundAllocated, thisPhase.claimed);
     }
 }

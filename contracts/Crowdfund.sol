@@ -31,24 +31,9 @@ contract Crowdfund {
 
     mapping(uint256 => Project) public projects;
 
-    function _mint(
-        uint256 _projectId,
-        address _to,
-        uint256 _amount
-    ) private {
-        Project storage thisProject = projects[_projectId];
-        thisProject.fundedAmount[_to] += _amount;
-        thisProject.totalSupply += _amount;
-    }
-
-    function _burn(
-        uint256 _projectId,
-        address _from,
-        uint256 _amount
-    ) private {
-        Project storage thisProject = projects[_projectId];
-        thisProject.fundedAmount[_from] -= _amount;
-        thisProject.totalSupply -= _amount;
+    constructor(address _tokenAddress) {
+        //dai = IDAIToken(_tokenAddress);
+        tkn = IERC20(_tokenAddress);
     }
 
     modifier refundable(uint256 _projectId) {
@@ -76,15 +61,6 @@ contract Crowdfund {
         require(balance >= _fundAmount, "You do not have enough money.");
         _;
     }
-
-    constructor(address _tokenAddress) {
-        //dai = IDAIToken(_tokenAddress);
-        tkn = IERC20(_tokenAddress);
-    }
-
-    /*function toSmallestUnit(uint256 _amount) internal pure returns (uint256) {
-        return _amount * (10 ** 18);
-    }*/
 
     /**
      * @dev Initialize new project
@@ -149,7 +125,7 @@ contract Crowdfund {
     /**
      * @dev Refund for funding phase
      */
-    function claimRefund(uint256 _projectId) external refundable(_projectId) {
+    function fundingRefund(uint256 _projectId) external refundable(_projectId) {
         Project storage thisProject = projects[_projectId];
 
         uint256 refundAmount = (thisProject.fundedAmount[msg.sender] / thisProject.totalSupply) *
@@ -158,5 +134,31 @@ contract Crowdfund {
         tkn.transfer(msg.sender, refundAmount);
         thisProject.currentAmount -= uint128(refundAmount);
         emit Refund(_projectId, msg.sender, refundAmount);
+    }
+
+    /**
+     * @dev Mint virtual refund tokens
+     */
+    function _mint(
+        uint256 _projectId,
+        address _to,
+        uint256 _amount
+    ) private {
+        Project storage thisProject = projects[_projectId];
+        thisProject.fundedAmount[_to] += _amount;
+        thisProject.totalSupply += _amount;
+    }
+
+    /**
+     * @dev Burn virtual refund tokens
+     */
+    function _burn(
+        uint256 _projectId,
+        address _from,
+        uint256 _amount
+    ) private {
+        Project storage thisProject = projects[_projectId];
+        thisProject.fundedAmount[_from] -= _amount;
+        thisProject.totalSupply -= _amount;
     }
 }

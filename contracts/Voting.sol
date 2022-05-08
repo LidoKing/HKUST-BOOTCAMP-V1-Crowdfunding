@@ -5,8 +5,6 @@ pragma solidity >=0.8.4 <0.9.0;
 import "./Initiation.sol";
 
 contract Voting is Initiation {
-    constructor(address _tokenAddress) Initiation(_tokenAddress) {}
-
     struct Proposal {
         uint64 voteStart;
         uint64 voteEnd;
@@ -29,6 +27,20 @@ contract Voting is Initiation {
     // project ID -> phase -> proposal
     mapping(uint256 => mapping(uint256 => Proposal)) proposals;
     mapping(uint256 => mapping(uint256 => Proposal)) reworks;
+
+    constructor(address _tokenAddress) Initiation(_tokenAddress) {}
+
+    /**
+     * @dev Get all suggested improvements
+     */
+    function getImprovements(uint256 _projectId, uint256 _phase) public view returns (string[] memory) {
+        Proposal storage thisProposal = proposals[_projectId][_phase];
+        string[] memory result = new string[](thisProposal.ipId);
+        for (uint256 i = 0; i < thisProposal.ipId; i++) {
+            result[i] = thisProposal.improvements[i].ipDetail;
+        }
+        return result;
+    }
 
     /**
      * @dev Caller is project creator, fundign has ended, funding goal reached
@@ -110,6 +122,7 @@ contract Voting is Initiation {
 
     /**
      * @dev Proposal initialization
+     * @param _rework Determines if proposal is first submission or reworked version
      */
     function _initializeProposal(
         uint256 _projectId,
@@ -133,6 +146,8 @@ contract Voting is Initiation {
 
     /**
      * @dev Start phase 0
+     * @param _deadlines and _fundAllocation of the same phase should have the same index
+     * @param _deadlines include the 5 days voting period
      */
     function initiateDevelopment(
         uint256 _projectId,
@@ -148,23 +163,11 @@ contract Voting is Initiation {
 
     /**
      * @dev Proceed to next phase
+     * @param _phase The phase to proceed to
      */
     function phaseProposal(uint256 _projectId, uint256 _phase) external proceed(_projectId, _phase) {
         // Start voting for proposal
         _initializeProposal(_projectId, _phase, false);
-    }
-
-    function _updateVote(
-        uint256 _projectId,
-        uint256 _phase,
-        uint256 _type
-    ) private {
-        Proposal storage thisProposal = proposals[_projectId][_phase];
-        thisProposal.voted[msg.sender] = true;
-        thisProposal.power[msg.sender] = projects[_projectId].fundedAmount[msg.sender];
-        thisProposal.voteType[msg.sender] = _type;
-        uint256 voteAmount = thisProposal.power[msg.sender];
-        thisProposal.typeTrack[_type] += voteAmount;
     }
 
     /**
@@ -217,7 +220,7 @@ contract Voting is Initiation {
     }
 
     /**
-     * @notice Creator has 2 days, upon completion of voting, to submit a revamp of proposal if it was not approved
+     * @notice Creator has 2 days, upon completion of voting, to submit a rework of proposal if it was not approved
      * @dev Initiate new voting round and push deadline of remaining phases
      */
     function reworkProposal(uint256 _projectId, uint256 _phase) external {
@@ -249,14 +252,18 @@ contract Voting is Initiation {
     }
 
     /**
-     * @dev Get all suggested improvements
+     * @dev Update voting state of Proposal struct
      */
-    function getImprovements(uint256 _projectId, uint256 _phase) external view returns (string[] memory) {
+    function _updateVote(
+        uint256 _projectId,
+        uint256 _phase,
+        uint256 _type
+    ) private {
         Proposal storage thisProposal = proposals[_projectId][_phase];
-        string[] memory result = new string[](thisProposal.ipId);
-        for (uint256 i = 0; i < thisProposal.ipId; i++) {
-            result[i] = thisProposal.improvements[i].ipDetail;
-        }
-        return result;
+        thisProposal.voted[msg.sender] = true;
+        thisProposal.power[msg.sender] = projects[_projectId].fundedAmount[msg.sender];
+        thisProposal.voteType[msg.sender] = _type;
+        uint256 voteAmount = thisProposal.power[msg.sender];
+        thisProposal.typeTrack[_type] += voteAmount;
     }
 }
