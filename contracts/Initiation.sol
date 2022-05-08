@@ -25,7 +25,7 @@ contract Initiation is Crowdfund {
     struct Phase {
         uint64 deadline;
         uint128 fundAllocated;
-        phaseStatus status;
+        PhaseStatus status;
     }
 
     uint64 constant votingPeriod = 5 days;
@@ -46,13 +46,12 @@ contract Initiation is Crowdfund {
         returns (
             uint64,
             uint128,
-            bool,
-            bool
+            PhaseStatus
         )
     {
         Phase storage thisPhase = projectState[_projectId].phases[_phase];
         require(uint8(_phase) <= projectState[_projectId].totalPhases, "There is no such phase.");
-        return (thisPhase.deadline, thisPhase.fundAllocated, thisPhase.voting, thisPhase.claimed);
+        return (thisPhase.deadline, thisPhase.fundAllocated, thisPhase.status);
     }
 
     /**
@@ -64,11 +63,11 @@ contract Initiation is Crowdfund {
         returns (
             uint64,
             uint128,
-            bool
+            PhaseStatus
         )
     {
         Phase storage thisPhase = projectState[_projectId].phases[projectState[_projectId].currentPhase];
-        return (thisPhase.deadline, thisPhase.fundAllocated, thisPhase.voting);
+        return (thisPhase.deadline, thisPhase.fundAllocated, thisPhase.status);
     }
 
     /**
@@ -108,7 +107,7 @@ contract Initiation is Crowdfund {
     function _claimPhase(uint256 _projectId, uint256 _phase) internal {
         Project storage thisProject = projects[_projectId];
         Phase storage thisPhase = projectState[_projectId].phases[_phase];
-        thisPhase.status = phaseStatus.Claimed;
+        thisPhase.status = PhaseStatus.Claimed;
         uint128 amount = thisPhase.fundAllocated;
         tkn.transfer(msg.sender, amount);
         thisProject.currentAmount -= amount;
