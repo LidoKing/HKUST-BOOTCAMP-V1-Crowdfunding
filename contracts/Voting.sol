@@ -5,7 +5,7 @@ pragma solidity >=0.8.4 <0.9.0;
 import "./Initiation.sol";
 
 contract Voting is Initiation {
-    event SomeEvent();
+    event Proposed(uint256 indexed projectId, uint256 phase);
 
     struct Proposal {
         uint64 voteStart;
@@ -77,13 +77,20 @@ contract Voting is Initiation {
     }
 
     /**
-     * @dev Caller is project creator, previous phase has ended
+     * @dev Caller is project creator, previous phase has ended, previous phase passed
      */
     modifier proceed(uint256 _projectId, uint256 _toPhase) {
         // Only valid in storage due to presence of mappings
         Phase storage prevPhase = projectState[_projectId].phases[_toPhase - 1];
         require(projects[_projectId].creator == msg.sender, "You are not the creator of the project.");
         require(uint64(block.timestamp) > prevPhase.deadline, "Previous phase has not ended.");
+        require(
+            uint128(proposals[_projectId][_toPhase - 1].typeTrack[_toPhase - 1]) >=
+                projectState[_projectId].threshold ||
+                uint128(reworks[_projectId][_toPhase - 1].typeTrack[_toPhase - 1]) >=
+                projectState[_projectId].threshold,
+            "Previous phase not passed, cannot proceed."
+        );
         _;
     }
 
@@ -164,31 +171,6 @@ contract Voting is Initiation {
     }
 
     /**
-     * @dev Proposal initialization
-     * @param _rework Determines if proposal is first submission or reworked version
-     */
-    function _initializeProposal(
-        uint256 _projectId,
-        uint256 _phase,
-        bool _rework
-    ) private {
-        if (_rework) {
-            Proposal storage thisProposal = reworks[_projectId][_phase];
-            thisProposal.voteStart = uint64(block.timestamp);
-            thisProposal.voteEnd = uint64(block.timestamp) + votingPeriod;
-            thisProposal.ipId = 0;
-            thisProposal.reworked = false;
-        } else {
-            Proposal storage thisProposal = proposals[_projectId][_phase];
-            thisProposal.voteStart = uint64(block.timestamp);
-            thisProposal.voteEnd = uint64(block.timestamp) + votingPeriod;
-            thisProposal.ipId = 0;
-            thisProposal.reworked = false;
-            projectState[_projectId].phases[_phase].status = PhaseStatus.Voting;
-        }
-    }
-
-    /**
      * @dev Start phase 0
      * @param _deadlines and _fundAllocation of the same phase should have the same index
      * @param _deadlines include the 5 days voting period
@@ -214,6 +196,8 @@ contract Voting is Initiation {
         projectState[_projectId].currentPhase = uint8(_phase);
         // Start voting for proposal
         _initializeProposal(_projectId, _phase, false);
+
+        emit Proposed(_projectId, _phase);
     }
 
     /**
@@ -304,6 +288,31 @@ contract Voting is Initiation {
         thisProject.totalSupply -= refundAmount;
         tkn.transfer(msg.sender, refundAmount);
         thisProject.currentAmount -= uint128(refundAmount);
+    }
+
+    /**
+     * @dev Proposal initialization
+     * @param _rework Determines if proposal is first submission or reworked version
+     */
+    function _initializeProposal(
+        uint256 _projectId,
+        uint256 _phase,
+        bool _rework
+    ) private {
+        if (_rework) {
+            Proposal storage thisProposal = reworks[_projectId][_phase];
+            thisProposal.voteStart = uint64(block.timestamp);
+            thisProposal.voteEnd = uint64(block.timestamp) + votingPeriod;
+            thisProposal.ipId = 0;
+            thisProposal.reworked = false;
+        } else {
+            Proposal storage thisProposal = proposals[_projectId][_phase];
+            thisProposal.voteStart = uint64(block.timestamp);
+            thisProposal.voteEnd = uint64(block.timestamp) + votingPeriod;
+            thisProposal.ipId = 0;
+            thisProposal.reworked = false;
+            projectState[_projectId].phases[_phase].status = PhaseStatus.Voting;
+        }
     }
 
     /**
