@@ -65,7 +65,7 @@ contract Voting is Initiation {
     }
 
     /**
-     * @dev Prerequisites for voting: within voting period, funded project, have not voted
+     * @dev Within voting period, funded project, have not voted
      */
     modifier votable(
         uint256 _projectId,
@@ -82,6 +82,10 @@ contract Voting is Initiation {
         _;
     }
 
+    /**
+     * @dev Scenario 1: Rework passed -> claim phase fund (voting ended, sum of total votes matched, rework passed)
+     *      Scenario 2: Proposal passed -> claim phase fund (voting ended, sum of total votes matched, proposal passed)
+     */
     modifier claimable(
         uint256 _projectId,
         uint256 _phase,
@@ -90,7 +94,7 @@ contract Voting is Initiation {
         Proposal storage thisProposal = proposals[_projectId][_phase];
         require(msg.sender == projects[_projectId].creator, "You are not the creator of the project.");
         require(
-            projectState[_projectId].phases[_phase].status == phaseStatus.Voting,
+            projectState[_projectId].phases[_phase].status == PhaseStatus.Voting,
             "Funds for this phase has already been claimed."
         );
         if (thisProposal.reworked == true) {
@@ -121,6 +125,22 @@ contract Voting is Initiation {
     }
 
     /**
+     * @dev Voting ended, rework rejected, has funded, not yet refunded
+     */
+    modifier devRefundable(uint256 _projectId) {
+        uint256 phase = projectState[_projectId].currentPhase;
+        Proposal storage thisProposal = reworks[_projectId][phase];
+        require(thisProposal.voteEnd < uint64(block.timestamp), "Voting period has not ended.");
+        require(
+            thisProposal.typeTrack[0] < projectState[_projectId].threshold,
+            "Proposal passed, refund not available."
+        );
+        require(projects[_projectId].hasFunded[msg.sender] == true, "You did not fund this project.");
+        require(projects[_projectId].refunded[msg.sender] == false, "Refund has already been claimed.");
+        _;
+    }
+
+    /**
      * @dev Proposal initialization
      * @param _rework Determines if proposal is first submission or reworked version
      */
@@ -141,7 +161,7 @@ contract Voting is Initiation {
             thisProposal.voteEnd = uint64(block.timestamp) + votingPeriod;
             thisProposal.ipId = 0;
             thisProposal.reworked = false;
-            projectState[_projectId].phases[_phase].status = phaseStatus.Voting;
+            projectState[_projectId].phases[_phase].status = PhaseStatus.Voting;
         }
     }
 
@@ -252,6 +272,15 @@ contract Voting is Initiation {
      */
     function claimFunds(uint256 _projectId, uint256 _phase) external claimable(_projectId, _phase, msg.sender) {
         _claimPhase(_projectId, _phase);
+    }
+
+    function developmentRefund(uint256 _projectId) external devRefundable(_projectId) {
+        Project storage thisProject = projects[_projectId];
+        thisProject.refunded[msg.sender] = true;
+        uint256 refundAmount = _refundAmount(_projectId);
+        thisProject.totalSupply -= refundAmount;
+        tkn.transfer(msg.sender, refundAmount);
+        thisProject.currentAmount -= uint128(refundAmount);
     }
 
     /**
