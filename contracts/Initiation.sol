@@ -4,6 +4,12 @@ pragma solidity >=0.8.4 <0.9.0;
 import "./Crowdfund.sol";
 
 contract Initiation is Crowdfund {
+    enum PhaseStatus {
+        Voting,
+        Claimed,
+        Refunding
+    }
+
     /**
      * @notice Phase 0: approve development arrangements and fund allocation
      * @dev State is initiated through "proposeDevelopment(...)" by project creator once funding is completed
@@ -19,8 +25,7 @@ contract Initiation is Crowdfund {
     struct Phase {
         uint64 deadline;
         uint128 fundAllocated;
-        bool voting;
-        bool claimed;
+        phaseStatus status;
     }
 
     uint64 constant votingPeriod = 5 days;
@@ -94,7 +99,6 @@ contract Initiation is Crowdfund {
             // 5 days for voting
             thisPhase.deadline = uint64(_deadlines[i]);
             thisPhase.fundAllocated = uint128(_fundAllocation[i]);
-            thisPhase.claimed = false;
         }
     }
 
@@ -104,8 +108,7 @@ contract Initiation is Crowdfund {
     function _claimPhase(uint256 _projectId, uint256 _phase) internal {
         Project storage thisProject = projects[_projectId];
         Phase storage thisPhase = projectState[_projectId].phases[_phase];
-        thisPhase.claimed = true;
-        thisPhase.voting = false;
+        thisPhase.status = phaseStatus.Claimed;
         uint128 amount = thisPhase.fundAllocated;
         tkn.transfer(msg.sender, amount);
         thisProject.currentAmount -= amount;

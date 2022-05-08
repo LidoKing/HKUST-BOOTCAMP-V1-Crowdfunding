@@ -90,7 +90,7 @@ contract Voting is Initiation {
         Proposal storage thisProposal = proposals[_projectId][_phase];
         require(msg.sender == projects[_projectId].creator, "You are not the creator of the project.");
         require(
-            projectState[_projectId].phases[_phase].claimed == false,
+            projectState[_projectId].phases[_phase].status == phaseStatus.Voting,
             "Funds for this phase has already been claimed."
         );
         if (thisProposal.reworked == true) {
@@ -141,7 +141,7 @@ contract Voting is Initiation {
             thisProposal.voteEnd = uint64(block.timestamp) + votingPeriod;
             thisProposal.ipId = 0;
             thisProposal.reworked = false;
-            projectState[_projectId].phases[_phase].voting = true;
+            projectState[_projectId].phases[_phase].status = phaseStatus.Voting;
         }
     }
 
