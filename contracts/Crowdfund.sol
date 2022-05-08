@@ -27,6 +27,7 @@ contract Crowdfund {
         uint256 totalSupply; // pack 3
         mapping(address => bool) hasFunded;
         mapping(address => uint256) fundedAmount;
+        mapping(address => bool) refunded;
     }
 
     mapping(uint256 => Project) public projects;
@@ -36,11 +37,15 @@ contract Crowdfund {
         tkn = IERC20(_tokenAddress);
     }
 
-    modifier refundable(uint256 _projectId) {
+    /**
+     * @dev Funding ended, funding goal reached, has funded, never refunded
+     */
+    modifier fundingRefundable(uint256 _projectId) {
         Project storage thisProject = projects[_projectId];
         require(block.timestamp >= thisProject.endTime, "Funding of this project has not ended.");
         require(thisProject.currentAmount < thisProject.goal, "Funding goal has been reached, refund not allowed.");
-        require(thisProject.fundedAmount[msg.sender] != 0, "You never funded this project / Refund already claimed.");
+        require(thisProject.hasFunded[msg.sender] != true, "You did not fund this project.");
+        require(thisProject.refunded[msg.sender] == false, "Refund has already been claimed");
         _;
     }
 
@@ -112,6 +117,7 @@ contract Crowdfund {
         thisProject.currentAmount -= uint128(_amountToReduce);
         if (thisProject.fundedAmount[msg.sender] == 0) {
             thisProject.funders--;
+            thisProject.hasFunded[msg.sender] = false;
         }
         emit Withdraw(_projectId, msg.sender, _amountToReduce);
     }
@@ -125,11 +131,11 @@ contract Crowdfund {
     /**
      * @dev Refund for funding phase
      */
-    function fundingRefund(uint256 _projectId) external refundable(_projectId) {
+    function fundingRefund(uint256 _projectId) external fundingRefundable(_projectId) {
         Project storage thisProject = projects[_projectId];
 
-        uint256 refundAmount = (thisProject.fundedAmount[msg.sender] / thisProject.totalSupply) *
-            thisProject.currentAmount;
+        thisProject.refunded[msg.sender] = true;
+        uint256 refundAmount = _refundAmount(_projectId);
         _burn(_projectId, msg.sender, refundAmount);
         tkn.transfer(msg.sender, refundAmount);
         thisProject.currentAmount -= uint128(refundAmount);
@@ -160,5 +166,10 @@ contract Crowdfund {
         Project storage thisProject = projects[_projectId];
         thisProject.fundedAmount[_from] -= _amount;
         thisProject.totalSupply -= _amount;
+    }
+
+    function _refundAmount(uint256 _projectId) internal returns (uint256) {
+        Project storage thisProject = projects[_projectId];
+        return (thisProject.fundedAmount[msg.sender] / thisProject.totalSupply) * thisProject.currentAmount;
     }
 }
