@@ -6,11 +6,13 @@ pragma solidity >=0.8.4 <0.9.0;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract Crowdfund {
-    event New(uint256 id, address indexed creator, uint256 goal, uint256 periodInDays);
-    event Fund(uint256 indexed id, address indexed funder, uint256 amount);
+    /**
+     * @dev 'f' indicates that the event is for funding phase
+     */
+    event NewProject(uint256 id, address indexed creator, uint256 goal, uint256 periodInDays);
+    event fFund(uint256 indexed id, address indexed funder, uint256 amount);
     event Withdraw(uint256 indexed id, address indexed withdrawer, uint256 amount);
-    event Claim(uint256 id);
-    event Refund(uint256 indexed id, address funder, uint256 amount);
+    event fRefund(uint256 indexed id, address funder, uint256 amount);
 
     uint256 projectId;
     //IDAIToken dai;
@@ -80,7 +82,7 @@ contract Crowdfund {
         thisProject.endTime = uint64(block.timestamp + _periodInDays * 1 days);
         thisProject.totalSupply = 0;
 
-        emit New(projectId, msg.sender, _goal, _periodInDays);
+        emit NewProject(projectId, msg.sender, _goal, _periodInDays);
         projectId++;
     }
 
@@ -102,11 +104,11 @@ contract Crowdfund {
             thisProject.hasFunded[msg.sender] = true;
         }
         _mint(_projectId, msg.sender, _amount);
-        emit Fund(_projectId, msg.sender, _amount);
+        emit fFund(_projectId, msg.sender, _amount);
     }
 
     /**
-     * @dev Reduce funded amount, remove funder if all funded money is taken away
+     * @dev Reduce funded amount, remove funder if all funded money is withdrawn
      */
     function reduceFunding(uint256 _projectId, uint256 _amountToReduce) public notEnded(_projectId) {
         Project storage thisProject = projects[_projectId];
@@ -122,12 +124,6 @@ contract Crowdfund {
         emit Withdraw(_projectId, msg.sender, _amountToReduce);
     }
 
-    // Withdraw all funded money
-    /*function reduceFunding(uint256 _projectId) external notEnded(_projectId) {
-        uint256 totalFunded = thisProject.fundedAmount[msg.sender];
-        reduceFunding(_projectId, totalFunded);
-    }*/
-
     /**
      * @dev Refund for funding phase
      */
@@ -139,7 +135,7 @@ contract Crowdfund {
         _burn(_projectId, msg.sender, refundAmount);
         tkn.transfer(msg.sender, refundAmount);
         thisProject.currentAmount -= uint128(refundAmount);
-        emit Refund(_projectId, msg.sender, refundAmount);
+        emit fRefund(_projectId, msg.sender, refundAmount);
     }
 
     /**
@@ -168,7 +164,10 @@ contract Crowdfund {
         thisProject.totalSupply -= _amount;
     }
 
-    function _refundAmount(uint256 _projectId) internal returns (uint256) {
+    /**
+     * @dev Get refund amount by multiplying current fund pool amount by percentage of ownership of virtual refund token
+     */
+    function _refundAmount(uint256 _projectId) internal view returns (uint256) {
         Project storage thisProject = projects[_projectId];
         return (thisProject.fundedAmount[msg.sender] / thisProject.totalSupply) * thisProject.currentAmount;
     }
