@@ -141,6 +141,7 @@ contract Voting is Initiation {
             thisProposal.voteEnd = uint64(block.timestamp) + votingPeriod;
             thisProposal.ipId = 0;
             thisProposal.reworked = false;
+            projectState[_projectId].phases[_phase].voting = true;
         }
     }
 
@@ -162,10 +163,12 @@ contract Voting is Initiation {
     }
 
     /**
+     * @notice New proposal means new phase initiated
      * @dev Proceed to next phase
      * @param _phase The phase to proceed to
      */
     function phaseProposal(uint256 _projectId, uint256 _phase) external proceed(_projectId, _phase) {
+        projectState[_projectId].currentPhase = uint8(_phase);
         // Start voting for proposal
         _initializeProposal(_projectId, _phase, false);
     }
@@ -239,7 +242,7 @@ contract Voting is Initiation {
         // Push deadline by 7 days for following phases
         uint256 counter = projectState[_projectId].totalPhases;
         for (uint256 i = _phase; i <= counter; i++) {
-            // 2 days for submitting rewoek of proposal and 5 days for voting
+            // 2 days for submitting rework of proposal and 5 days for voting
             projectState[_projectId].phases[i].deadline += uint64(7 days);
         }
     }
