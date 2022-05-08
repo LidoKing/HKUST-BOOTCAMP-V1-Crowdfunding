@@ -4,6 +4,13 @@ pragma solidity >=0.8.4 <0.9.0;
 import "./Crowdfund.sol";
 
 contract Initiation is Crowdfund {
+    /**
+     * @dev 'dev' indicates that event is for development stage
+     */
+    event Initiate(uint256 projectId, uint256 numberOfPhases);
+    event devClaim(uint256 indexed projectId, uint256 phase, uint256 amount);
+    event devRefund(uint256 indexed projectId, address funder, uint256 amount);
+
     enum PhaseStatus {
         Voting,
         Claimed,
@@ -30,9 +37,6 @@ contract Initiation is Crowdfund {
 
     uint64 constant votingPeriod = 5 days;
 
-    /**
-     * @dev porjectId -> project state
-     */
     mapping(uint256 => State) projectState;
 
     constructor(address _tokenAddress) Crowdfund(_tokenAddress) {}
@@ -99,6 +103,8 @@ contract Initiation is Crowdfund {
             thisPhase.deadline = uint64(_deadlines[i]);
             thisPhase.fundAllocated = uint128(_fundAllocation[i]);
         }
+
+        emit Initiate(_projectId, thisState.totalPhases);
     }
 
     /**
@@ -111,5 +117,7 @@ contract Initiation is Crowdfund {
         uint128 amount = thisPhase.fundAllocated;
         tkn.transfer(msg.sender, amount);
         thisProject.currentAmount -= amount;
+
+        emit devClaim(_projectId, _phase, amount);
     }
 }

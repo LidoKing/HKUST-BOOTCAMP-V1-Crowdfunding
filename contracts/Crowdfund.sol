@@ -7,11 +7,11 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract Crowdfund {
     /**
-     * @dev 'f' indicates that the event is for funding phase
+     * @dev 'f' indicates that event is for funding stage
      */
-    event NewProject(uint256 projectId, address indexed creator, uint256 goal, uint256 periodInDays);
-    event fFund(uint256 indexed projectId, address indexed funder, uint256 amount);
-    event Withdraw(uint256 indexed projectId, address indexed funder, uint256 amount);
+    event NewProject(uint256 projectId, address creator, uint256 goal, uint256 periodInDays);
+    event fFund(uint256 indexed projectId, address funder, uint256 amount);
+    event Withdraw(uint256 indexed projectId, address funder, uint256 amount);
     event fRefund(uint256 indexed projectId, address funder, uint256 amount);
 
     uint256 projectId;
