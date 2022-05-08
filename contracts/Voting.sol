@@ -5,7 +5,11 @@ pragma solidity >=0.8.4 <0.9.0;
 import "./Initiation.sol";
 
 contract Voting is Initiation {
-    event Proposed(uint256 indexed projectId, uint256 phase);
+    event Propose(uint256 indexed projectId, uint256 phase, uint256 deadline);
+    event Vote(uint256 indexed projectId, uint256 phase, address funder, uint256 voteType);
+    event ProposeImprovement(uint256 indexed projectId, uint256 phase, address fromFunder, uint256 improvementId);
+    event Delegate(uint256 indexed projectId, uint256 phase, address delegater, address delegatee);
+    event Rework(uint256 indexed projectId, uint256 phase, uint256 newPhaseDeadline);
 
     struct Proposal {
         uint64 voteStart;
@@ -185,6 +189,8 @@ contract Voting is Initiation {
         _initializeState(_projectId, _deadlines, _fundAllocation);
         // Start voting for proposal
         _initializeProposal(_projectId, 0, false);
+
+        emit Propose(_projectId, 0, block.timestamp + uint256(votingPeriod));
     }
 
     /**
@@ -197,7 +203,7 @@ contract Voting is Initiation {
         // Start voting for proposal
         _initializeProposal(_projectId, _phase, false);
 
-        emit Proposed(_projectId, _phase);
+        emit Propose(_projectId, _phase, projectState[_projectId].phases[_phase].deadline);
     }
 
     /**
@@ -209,6 +215,8 @@ contract Voting is Initiation {
         uint256 _type
     ) external votable(_projectId, _phase, msg.sender) {
         _updateVote(_projectId, _phase, _type);
+
+        emit Vote(_projectId, _phase, msg.sender, _type);
     }
 
     /**
@@ -221,8 +229,14 @@ contract Voting is Initiation {
         string calldata _improvement
     ) external {
         _updateVote(_projectId, _phase, 1);
+
+        emit Vote(_projectId, _phase, msg.sender, 1);
+
         Proposal storage thisProposal = proposals[_projectId][_phase];
         thisProposal.improvements[thisProposal.ipId].ipDetail = _improvement;
+
+        emit ProposeImprovement(_projectId, _phase, msg.sender, thisProposal.ipId);
+
         thisProposal.ipId++;
     }
 
@@ -242,10 +256,15 @@ contract Voting is Initiation {
         thisProposal.power[msg.sender] = 0;
         thisProposal.power[_delegatee] += delegateAmount;
         thisProposal.delegated[msg.sender] = _delegatee;
+
+        emit Delegate(_projectId, _phase, msg.sender, _delegatee);
+
         // If delegatee has already voted before delegation, directly add to typeTrack
         if (thisProposal.voted[_delegatee] == true) {
             uint256 delegateeType = thisProposal.voteType[_delegatee];
             thisProposal.typeTrack[delegateeType] += delegateAmount;
+
+            emit Vote(_projectId, _phase, msg.sender, delegateeType);
         }
     }
 
@@ -266,12 +285,14 @@ contract Voting is Initiation {
         thisProposal.reworked = true;
         _initializeProposal(_projectId, _phase, true);
 
-        // Push deadline by 7 days for following phases
+        // Push deadline by (block.timestamp - voteEnd + 5 days) for following phases, 5 days for voting
+        uint64 delay = uint64(block.timestamp - thisProposal.voteEnd + 5 days);
         uint256 counter = projectState[_projectId].totalPhases;
         for (uint256 i = _phase; i <= counter; i++) {
-            // 2 days for submitting rework of proposal and 5 days for voting
-            projectState[_projectId].phases[i].deadline += uint64(7 days);
+            projectState[_projectId].phases[i].deadline += delay;
         }
+
+        emit Rework(_projectId, _phase, uint256(projectState[_projectId].phases[_phase].deadline));
     }
 
     /**
@@ -281,6 +302,9 @@ contract Voting is Initiation {
         _claimPhase(_projectId, _phase);
     }
 
+    /**
+     * @dev Retrieve remaining funds if rework of proposal also rejected
+     */
     function developmentRefund(uint256 _projectId) external devRefundable(_projectId) {
         Project storage thisProject = projects[_projectId];
         thisProject.refunded[msg.sender] = true;
@@ -288,6 +312,8 @@ contract Voting is Initiation {
         thisProject.totalSupply -= refundAmount;
         tkn.transfer(msg.sender, refundAmount);
         thisProject.currentAmount -= uint128(refundAmount);
+
+        emit devRefund(_projectId, msg.sender, refundAmount);
     }
 
     /**
