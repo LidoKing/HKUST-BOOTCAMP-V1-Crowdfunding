@@ -19,6 +19,7 @@ contract Initiation is Crowdfund {
     struct Phase {
         uint64 deadline;
         uint128 fundAllocated;
+        bool voting;
         bool claimed;
     }
 
@@ -32,9 +33,27 @@ contract Initiation is Crowdfund {
     constructor(address _tokenAddress) Crowdfund(_tokenAddress) {}
 
     /**
-     * @dev Getter function for phase detail
+     * @dev Getter for phase detail
      */
     function phaseDetail(uint256 _projectId, uint256 _phase)
+        public
+        view
+        returns (
+            uint64,
+            uint128,
+            bool,
+            bool
+        )
+    {
+        Phase storage thisPhase = projectState[_projectId].phases[_phase];
+        require(uint8(_phase) <= projectState[_projectId].totalPhases, "There is no such phase.");
+        return (thisPhase.deadline, thisPhase.fundAllocated, thisPhase.voting, thisPhase.claimed);
+    }
+
+    /**
+     * @dev Getter for current phase
+     */
+    function currentPhaseDetail(uint256 _projectId)
         public
         view
         returns (
@@ -43,9 +62,8 @@ contract Initiation is Crowdfund {
             bool
         )
     {
-        Phase storage thisPhase = projectState[_projectId].phases[_phase];
-        require(uint8(_phase) <= projectState[_projectId].totalPhases, "There is no such phase.");
-        return (thisPhase.deadline, thisPhase.fundAllocated, thisPhase.claimed);
+        Phase storage thisPhase = projectState[_projectId].phases[projectState[_projectId].currentPhase];
+        return (thisPhase.deadline, thisPhase.fundAllocated, thisPhase.voting);
     }
 
     /**
@@ -53,6 +71,8 @@ contract Initiation is Crowdfund {
      * @dev Initialize State struct
      * @param _deadlines and _fundAllocation of the same phase should have the same index
      * @param _deadlines include the 5 days voting period
+     *        e.g. _deadlines[20/5, 20/6, 10/7], block.timestamp = 8/5
+     *             Phase 0: 8/5-13/5; Phase 1: 13/5-20/5; Phase 2: 20/5-20/6; Phase 3: 20/6-10/7
      */
     function _initializeState(
         uint256 _projectId,
@@ -72,7 +92,7 @@ contract Initiation is Crowdfund {
         for (uint256 i = 0; i <= _deadlines.length; i++) {
             Phase storage thisPhase = thisState.phases[i + 1];
             // 5 days for voting
-            thisPhase.deadline = uint64(_deadlines[i] + votingPeriod);
+            thisPhase.deadline = uint64(_deadlines[i]);
             thisPhase.fundAllocated = uint128(_fundAllocation[i]);
             thisPhase.claimed = false;
         }
@@ -85,6 +105,7 @@ contract Initiation is Crowdfund {
         Project storage thisProject = projects[_projectId];
         Phase storage thisPhase = projectState[_projectId].phases[_phase];
         thisPhase.claimed = true;
+        thisPhase.voting = false;
         uint128 amount = thisPhase.fundAllocated;
         tkn.transfer(msg.sender, amount);
         thisProject.currentAmount -= amount;
