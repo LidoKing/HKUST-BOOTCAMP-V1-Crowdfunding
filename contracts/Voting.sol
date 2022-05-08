@@ -5,6 +5,8 @@ pragma solidity >=0.8.4 <0.9.0;
 import "./Initiation.sol";
 
 contract Voting is Initiation {
+    event SomeEvent();
+
     struct Proposal {
         uint64 voteStart;
         uint64 voteEnd;
@@ -31,15 +33,36 @@ contract Voting is Initiation {
     constructor(address _tokenAddress) Initiation(_tokenAddress) {}
 
     /**
-     * @dev Get all suggested improvements
+     * @dev Getter for all suggested improvements
      */
-    function getImprovements(uint256 _projectId, uint256 _phase) public view returns (string[] memory) {
+    function getImprovements(uint256 _projectId, uint256 _phase) public view returns (string[] memory result) {
         Proposal storage thisProposal = proposals[_projectId][_phase];
-        string[] memory result = new string[](thisProposal.ipId);
+        result = new string[](thisProposal.ipId);
         for (uint256 i = 0; i < thisProposal.ipId; i++) {
             result[i] = thisProposal.improvements[i].ipDetail;
         }
         return result;
+    }
+
+    /**
+     * @dev Getter for proposal status of specific phase
+     */
+    function getProposal(uint256 _projectId, uint256 _phase)
+        public
+        view
+        returns (
+            uint64 start,
+            uint64 end,
+            uint256[3] memory types
+        )
+    {
+        Proposal storage thisProposal = proposals[_projectId][_phase];
+        start = thisProposal.voteStart;
+        end = thisProposal.voteEnd;
+        for (uint256 i = 0; i < 3; i++) {
+            types[i] = thisProposal.typeTrack[i];
+        }
+        return (start, end, types);
     }
 
     /**
