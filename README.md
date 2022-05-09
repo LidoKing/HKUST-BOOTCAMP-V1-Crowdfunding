@@ -110,3 +110,10 @@ Normally, builders will just get the amount of fund allocated for the correspond
 
 Second scenario:
 When a project ends up failing, in addition to the reduction of losses thanks to the phased fund release feature, the yield farming mechanism can compensate some of funders losses.
+
+## Potential/Future Features
+
+- Accept funding in the form of other cryptocurrencies (currently only stablecoin, DAI)
+- Provide more options for yield farming, not just Aave
+- Crosschain funding
+- Development delays -> vote on whether accept delay or not, push deadlines
