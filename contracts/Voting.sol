@@ -306,14 +306,15 @@ contract Voting is Initiation {
 
     /**
      * @dev Retrieve remaining funds if rework of proposal also rejected
+     *      No need to modify project currentAmount which will remain as 0 due to immediate transfer after withdrawal from aave
      */
     function developmentRefund(uint256 _projectId) external devRefundable(_projectId) {
         Project storage thisProject = projects[_projectId];
         thisProject.refunded[msg.sender] = true;
         uint256 refundAmount = _refundAmount(_projectId);
         thisProject.totalSupply -= refundAmount;
+        _withdrawFromAave(refundAmount, false);
         tkn.transfer(msg.sender, refundAmount);
-        thisProject.currentAmount -= uint128(refundAmount);
 
         emit devRefund(_projectId, msg.sender, refundAmount);
     }
