@@ -30,9 +30,12 @@ function initiateDevelopment(
 ```
 
 Deadlines and fund allocations are passed in the form of array where the same phase should have the same index in the arrays.
-5 day voting period should be taken into account when deciding and submitting deadlines plan, example:
-\_deadlines[20/5, 20/6, 10/7], block.timestamp = 8/5
+5 day voting period should be taken into account when deciding and submitting deadlines plan:
+
+```shell
+_deadlines[20/5, 20/6, 10/7], block.timestamp = 8/5
 Phase 0: 8/5-13/5; Phase 1: 13/5-20/5; Phase 2: 20/5-20/6; Phase 3: 20/6-10/7
+```
 
 ### Proposal Submission
 
