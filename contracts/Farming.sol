@@ -36,7 +36,8 @@ contract Farming {
         address _token,
         uint256 _amount,
         address _to
-    ) internal {
-        pool.withdraw(_token, _amount, _to);
+    ) internal returns (uint256) {
+        uint256 withdrawed = pool.withdraw(_token, _amount, _to);
+        return withdrawed;
     }
 }
