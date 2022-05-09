@@ -135,7 +135,7 @@ contract Voting is Initiation {
             Proposal storage thisReworked = reworks[_projectId][_phase];
             require(thisReworked.voteEnd < uint64(block.timestamp), "Voting period has not ended");
             require(
-                uint128(thisReworked.typeTrack[0] + thisReworked.typeTrack[1] + thisReworked.typeTrack[2]) ==
+                uint128(thisReworked.typeTrack[0] + thisReworked.typeTrack[1] + thisReworked.typeTrack[2]) <=
                     projectState[_projectId].totalVotes,
                 "Unequal total votes, abnormality detected."
             );
@@ -146,7 +146,7 @@ contract Voting is Initiation {
         } else {
             require(thisProposal.voteEnd < uint64(block.timestamp), "Voting period has not ended");
             require(
-                uint128(thisProposal.typeTrack[0] + thisProposal.typeTrack[1] + thisProposal.typeTrack[2]) ==
+                uint128(thisProposal.typeTrack[0] + thisProposal.typeTrack[1] + thisProposal.typeTrack[2]) <=
                     projectState[_projectId].totalVotes,
                 "Unequal total votes, abnormality detected."
             );
