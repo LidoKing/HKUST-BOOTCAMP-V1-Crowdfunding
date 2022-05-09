@@ -15,7 +15,7 @@ General flow:
 
 The level of protection that funders have in current crowdfunding platforms remains low, leading to problems problems such as scam projects where builders just take all the money and do nothing, and delivery of products that fall short of expectations.
 
-Lidogogo tackles this problem by integrating a phased fund release feature so that instead of a one-time release, fund pools are divided into portions and 'allocated' to the corresponding phase of development. Builders have to first submit proposal/plan for the phase they want to proceed to and only if the phase is passed (through voting) can the funds be released which then they can start development.
+Lidogogo tackles this problem by integrating a phased fund release feature so that instead of a one-time release, fund pools are divided into portions and 'allocated' to the corresponding phase of development. Builders have to first submit proposal/plan for the phase they want to proceed to and only if the proposal is passed (through voting) can the funds be released which then they can start development.
 
 ### Development Initiation
 
@@ -56,3 +56,37 @@ struct Proposal {
 ```
 
 ### Proposal Voting
+
+Proposal voting is an essential process for them to participate in the development process and monitor the progress of the project. Voting power of funders is is the amount they funded for the project (e.g. funded $1000, voting power = 1000) and threshold of passing the proposal is 80% of total votes (total amount funded). Again, builders can only funds for the phase if proposal is passed.
+
+#### Voting Types
+
+- For (0) - Supports proposal
+- Against (1) - Reject proposal, propose improvement
+- Abstain (2) - No stance
+- Delegate (3) - Transfer all voting power to delegatee
+
+There is no 'default' vote type.
+
+### Resolution Flow
+
+For funders who reject a proposal, suggestions/improvements are expected to be provided so that builders can improve their proposal and submit a rework of it. Improvements are wrapped in `Proposal` struct and builders can obtain all improvements suggested through `getImprovements`.
+
+```shell
+uint8 ipId;
+mapping(uint256 => Improvement) improvements;
+```
+
+There is only one chance for rework and it should be submitted within two days after the voting of initial proposal has ended. If no rework is submitted or the rework of proposal is rejected again, project development will be terminated and refunding phase will start.
+
+### Refund
+
+For simplicity, `mapping(address => uint256) fundedAmount` serves as a virtual refund token so that an individual token contract is not needed. Total number of tokens issued is tracked with `uint256 totalSupply`. Both are wrapped inside the `Project` struct.
+
+#### Refund Amount Calculation
+
+```shell
+(fundedAmount / totalSupply) * remaining funds in fund pool
+```
+
+This is identical to multiplying the remaining funds in fund pool by the percentage ownership of virtual refund token.
