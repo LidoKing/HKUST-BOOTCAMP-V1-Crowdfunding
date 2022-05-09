@@ -61,12 +61,12 @@ Proposal voting is an essential process for them to participate in the developme
 
 #### Voting Types
 
-- For (0) - Supports proposal
-- Against (1) - Reject proposal, propose improvement
-- Abstain (2) - No stance
-- Delegate (3) - Transfer all voting power to delegatee
+- For (1) - Supports proposal
+- Against (2) - Reject proposal, propose improvement
+- Abstain (3) - No stance
+- Delegate (4) - Transfer all voting power to delegatee
 
-There is no 'default' vote type.
+There is no 'default' vote type. Funders must call voting function to register for a type.
 
 ### Resolution Flow
 
@@ -86,7 +86,7 @@ For simplicity, `mapping(address => uint256) fundedAmount` serves as a virtual r
 #### Refund Amount Calculation
 
 ```shell
-(fundedAmount / totalSupply) * remaining funds in fund pool
+(fundedAmount / totalSupply) * remaining funds
 ```
 
 This is identical to multiplying the remaining funds in fund pool by the percentage ownership of virtual refund token.
