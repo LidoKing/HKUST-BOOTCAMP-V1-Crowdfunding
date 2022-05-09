@@ -16,6 +16,7 @@ contract Crowdfund {
 
     uint256 projectId;
     //IDAIToken dai;
+    address public tknAddress;
     IERC20 tkn;
 
     struct Project {
@@ -40,6 +41,7 @@ contract Crowdfund {
      */
     constructor(address _tokenAddress) {
         //dai = IDAIToken(_tokenAddress);
+        tknAddress = _tokenAddress;
         tkn = IERC20(_tokenAddress);
     }
 
