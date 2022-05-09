@@ -117,8 +117,8 @@ contract Voting is Initiation {
     }
 
     /**
-     * @dev Scenario 1: Rework passed -> claim phase fund (voting ended, sum of total votes matched, rework passed)
-     *      Scenario 2: Proposal passed -> claim phase fund (voting ended, sum of total votes matched, proposal passed)
+     * @dev Scenario 1: Rework passed -> claim phase fund (voting ended, sum of vote types less than or equal totalVotes, rework passed)
+     *      Scenario 2: Proposal passed -> claim phase fund (voting ended, sum of vote types less than or equal totalVotes, proposal passed)
      */
     modifier claimable(
         uint256 _projectId,
@@ -188,7 +188,7 @@ contract Voting is Initiation {
         // Deadlines and fund allocations plan
         _initializeState(_projectId, _deadlines, _fundAllocation);
         // Deposit all funds to aave staking pool
-        _depositToAave();
+        _depositToAave(_projectId);
         // Start voting for proposal
         _initializeProposal(_projectId, 0, false);
 
@@ -357,12 +357,5 @@ contract Voting is Initiation {
         thisProposal.voteType[msg.sender] = _type;
         uint256 voteAmount = thisProposal.power[msg.sender];
         thisProposal.typeTrack[_type] += voteAmount;
-    }
-
-    function _depositToAave() private {
-        uint256 depositAmount = uint256(projects[_projectId].currentAmount);
-        // Increase allowance for aave contract to call transferFrom
-        tkn.increaseAllowance(aavePoolAddress, depositAmount);
-        _supply(tknAddress, address(this), depositAmount);
     }
 }
