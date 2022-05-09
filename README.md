@@ -36,9 +36,7 @@ Phase 0: 8/5-13/5; Phase 1: 13/5-20/5; Phase 2: 20/5-20/6; Phase 3: 20/6-10/7
 
 ### Proposal Submission
 
-Actual development starts after phase 0 is passed and builders submit phase-specific proposal. For phases after phase 1, builders should also provide proofs of work of the previous phase in addition to just plannings for the proceeding phase. Actual details of proposal is handled at the front-end. Builders will submit proposals through `phaseProposal` function for phases after phase 0.
-
-As proposal details are handled at the front-end, proposal function of the contract is basically initiation of new voting round and voting status is encapsulated in `Proposal` struct.
+Actual development starts after phase 0 is passed and builders submit phase-specific proposal. For phases after phase 1, builders should also provide proofs of work of the previous phase in addition to just plannings for the proceeding phase. As actual details of proposal is handled at the front-end, proposal function of the contract is basically initiation of new voting round where voting status is encapsulated in `Proposal` struct.. Builders will submit proposals through `phaseProposal` function for phases after phase 0.
 
 ```shell
 struct Proposal {
