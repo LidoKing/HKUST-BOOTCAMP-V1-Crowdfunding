@@ -1,21 +1,21 @@
 # Lidogogo
 
-A crowdfunding platform with partial fund release feature to protect funders and integration of yield farming to fully utilize idle locked funds.
+Lidogogo is a crowdfunding platform with partial fund release feature to protect funders and integration of yield farming to fully utilize idle locked funds.
 
 General flow:
 
 1. Builders create project (funding)
 2. Builders submit development plan (phase deadlines and fund allocation), phase 0 starts (voting)
-3. Stake all funds for yield farming
+3. Stake all funds for yield farming (currently, at Aave)
 4. Builders submit proposal to proceed to next phase (voting)
 5. Builders claim funds for the phase, withdrawing corresponding amount funds from yield farm, and starts development
-6. Funders can claim generated interest upon completion of whole project (last phase has passed)
+6. Step 4 and 5 repeats until project development is complete
 
 ## Phased Fund Release
 
-The level of protection that funders have in current crowdfunding platforms remains low, leading to problems problems such as scam projects where builders just take all the money and do nothing, and delivery of products that fall short of expectations.
+The level of protection that funders have in current crowdfunding platforms remains to be low, leading to problems problems such as scam projects where builders just take all the money and do nothing, and delivery of products that fall short of expectations.
 
-Lidogogo tackles this problem by integrating a phased fund release feature so that instead of a one-time release, fund pools are divided into portions and 'allocated' to the corresponding phase of development. Builders have to first submit proposal/plan for the phase they want to proceed to and only if the proposal is passed (through voting) can the funds be released which then they can start development.
+Lidogogo tackles this problem by integrating a phased fund release feature so that instead of a one-time release, the fund pool is divided into portions and 'allocated' to the corresponding phase of development. Builders have to first submit proposal/plan for the phase they want to proceed to and only if the proposal is passed (through voting) can the funds be released which then they can start development.
 
 ### Development Initiation
 
@@ -93,3 +93,20 @@ For simplicity, `mapping(address => uint256) fundedAmount` serves as a virtual r
 ```
 
 This is identical to multiplying the remaining funds in fund pool by the percentage ownership of virtual refund token.
+
+## Yield Farming
+
+The implementation of phased fund release means that unreleased funds locked in the contract will just remain idle. Lidogogo unleashes the full potential of the funds by integrating DeFi to generate yield from these idle funds, providing an extra benefit for builders or funders. During project initiation, apart from State and Proposal initialization, all funds are deposited to Aave V3 for staking. This can be easily accomplished by connecting to the `supply` and `withdraw` functions from Aave V3 core contract.
+
+### Accrued interest
+
+Two scenarios triggering withdrawal of funds from aave back to crowdfunding contract:
+
+- Builders claim funds to start development after successful proposal
+- Rework of proposal is rejected and funders refund
+
+First scenario:
+Normally, builders will just get the amount of fund allocated for the corresponding phase. Thanks to the yield-farming mechanism, there will be interest accrued throughout project development. When the last phase of development is reached, builders can claim all remaining funds including all generated interest as a bonus.
+
+Second scenario:
+When a project ends up failing, in addition to the reduction of losses thanks to the phased fund release feature, the yield farming mechanism can compensate some of funders losses.
