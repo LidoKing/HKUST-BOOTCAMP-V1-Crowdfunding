@@ -18,7 +18,7 @@ contract Voting is Initiation {
         uint8 ipId;
         bool reworked;
         mapping(uint256 => Improvement) improvements;
-        // Voting types: 0 - For, 1 - Against, 2 - Abstain, 3 - Delegated
+        // Voting types: 1 - For, 2 - Against, 3 - Abstain, 4 - Delegated
         mapping(address => uint256) voteType;
         mapping(uint256 => uint256) typeTrack;
         mapping(address => address) delegated;
@@ -228,9 +228,9 @@ contract Voting is Initiation {
         uint256 _phase,
         string calldata _improvement
     ) external {
-        _updateVote(_projectId, _phase, 1);
+        _updateVote(_projectId, _phase, 2);
 
-        emit Vote(_projectId, _phase, msg.sender, 1);
+        emit Vote(_projectId, _phase, msg.sender, 2);
 
         Proposal storage thisProposal = proposals[_projectId][_phase];
         thisProposal.improvements[thisProposal.ipId].ipDetail = _improvement;
@@ -251,7 +251,7 @@ contract Voting is Initiation {
         require(projects[_projectId].hasFunded[_delegatee] == true, "Delegatee is not a funder of the project.");
         Proposal storage thisProposal = proposals[_projectId][_phase];
         thisProposal.voted[msg.sender] = true;
-        thisProposal.voteType[msg.sender] = 3;
+        thisProposal.voteType[msg.sender] = 4;
         uint256 delegateAmount = projects[_projectId].fundedAmount[msg.sender];
         thisProposal.power[msg.sender] = 0;
         thisProposal.power[_delegatee] += delegateAmount;
