@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
 
 pragma solidity >=0.8.4 <0.9.0;
-import "./Crowdfund.sol";
 
-contract Initiation is Crowdfund {
+import "./Crowdfund.sol";
+import "./Farming.sol";
+
+contract Initiation is Crowdfund, Farming {
     /**
      * @dev 'dev' indicates that event is for development stage
      */
@@ -39,7 +41,7 @@ contract Initiation is Crowdfund {
 
     mapping(uint256 => State) projectState;
 
-    constructor(address _tokenAddress) Crowdfund(_tokenAddress) {}
+    constructor(address _tokenAddress, address _aavePoolAddress) Crowdfund(_tokenAddress) Farming(_aavePoolAddress) {}
 
     /**
      * @dev Getter for phase detail
@@ -111,13 +113,45 @@ contract Initiation is Crowdfund {
      * @dev Claim allocated funds for the corresponding phase
      */
     function _claimPhase(uint256 _projectId, uint256 _phase) internal {
-        Project storage thisProject = projects[_projectId];
-        Phase storage thisPhase = projectState[_projectId].phases[_phase];
-        thisPhase.status = PhaseStatus.Claimed;
-        uint128 amount = thisPhase.fundAllocated;
-        tkn.transfer(msg.sender, amount);
-        thisProject.currentAmount -= amount;
+        State storage thisState = projectState[_projectId];
+        thisState.phases[_phase].status = PhaseStatus.Claimed;
+        uint256 claimAmount;
+        // If current phase is last phase, creator claims all remaining funds including all accrued interest
+        if (thisState.currentPhase == thisState.totalPhases) {
+            claimAmount = _withdrawFromAave(0, true);
+        } else {
+            uint256 allocatedAmount = uint256(thisState.phases[_phase].fundAllocated);
+            claimAmount = _withdrawFromAave(allocatedAmount, false);
+        }
+        tkn.transfer(msg.sender, claimAmount);
 
-        emit devClaim(_projectId, _phase, amount);
+        emit devClaim(_projectId, _phase, claimAmount);
+    }
+
+    /**
+     * @dev Approve aave contract to spend funds, reduce project currentAmount to 0
+     */
+    function _depositToAave(uint256 _projectId) internal {
+        uint256 depositAmount = uint256(projects[_projectId].currentAmount);
+        // Increase allowance for aave contract to call transferFrom
+        tkn.approve(aavePoolAddress, depositAmount);
+        _supply(tknAddress, address(this), depositAmount);
+        projects[_projectId].currentAmount = 0;
+    }
+
+    /**
+     * @dev No need to modify project currentAmount which will remain as 0 due to immediate transfer after withdrawal from aave
+     */
+    function _withdrawFromAave(uint256 _withdrawAmount, bool _withdrawAll) internal returns (uint256) {
+        uint256 withdrawed;
+
+        if (_withdrawAll) {
+            // According to aave doc, a withdrawal amount of type(uint).max means all reamaining user balance
+            withdrawed = _withdraw(tknAddress, type(uint256).max, address(this));
+        } else {
+            withdrawed = _withdraw(tknAddress, _withdrawAmount, address(this));
+        }
+
+        return withdrawed;
     }
 }
