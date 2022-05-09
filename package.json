@@ -8,6 +8,7 @@
     "url": "https://github.com/paulrberg"
   },
   "devDependencies": {
+    "@aave/core-v3": "^1.13.1",
     "@commitlint/cli": "^16.2.3",
     "@commitlint/config-conventional": "^16.2.1",
     "@ethersproject/abi": "^5.6.0",
