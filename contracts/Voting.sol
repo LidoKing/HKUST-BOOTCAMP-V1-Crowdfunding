@@ -187,6 +187,8 @@ contract Voting is Initiation {
         require(_deadlines.length == _fundAllocation.length, "Unmatched number of phases.");
         // Deadlines and fund allocations plan
         _initializeState(_projectId, _deadlines, _fundAllocation);
+        // Deposit all funds to aave staking pool
+        _depositToAave();
         // Start voting for proposal
         _initializeProposal(_projectId, 0, false);
 
@@ -355,5 +357,12 @@ contract Voting is Initiation {
         thisProposal.voteType[msg.sender] = _type;
         uint256 voteAmount = thisProposal.power[msg.sender];
         thisProposal.typeTrack[_type] += voteAmount;
+    }
+
+    function _depositToAave() private {
+        uint256 depositAmount = uint256(projects[_projectId].currentAmount);
+        // Increase allowance for aave contract to call transferFrom
+        tkn.increaseAllowance(aavePoolAddress, depositAmount);
+        _supply(tknAddress, address(this), depositAmount);
     }
 }
