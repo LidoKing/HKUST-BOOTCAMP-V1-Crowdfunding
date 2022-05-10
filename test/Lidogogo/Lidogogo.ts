@@ -60,8 +60,8 @@ describe("Unit tests", function () {
 
     it("should create project", async function () {
       let goal: BigNumberish = su("2500");
-      await this.cf.connect(this.signers.admin).createProject(goal, 30);
-      let project = await this.cf.projects(0);
+      await this.lido.connect(this.signers.admin).createProject(goal, 30);
+      let project = await this.lido.projects(0);
       expect(project.creator).to.equal(this.signers.admin.address);
       expect(project.goal).to.equal(goal);
       expect(project.currentAmount).to.equal(0);
@@ -70,14 +70,14 @@ describe("Unit tests", function () {
     it("should fund project", async function () {
       // Create project
       let goal: BigNumberish = su("2500");
-      await this.cf.connect(this.signers.admin).createProject(goal, 30);
+      await this.lido.connect(this.signers.admin).createProject(goal, 30);
       // Fund project
       let amount: BigNumberish = su("500");
-      await this.tkn.connect(this.signers.signer1).approve(this.cf.address, amount);
-      await this.cf.connect(this.signers.signer1).fundProject(0, amount);
-      let project = await this.cf.projects(0);
+      await this.tkn.connect(this.signers.signer1).approve(this.lido.address, amount);
+      await this.lido.connect(this.signers.signer1).fundProject(0, amount);
+      let project = await this.lido.projects(0);
       expect(await this.tkn.balanceOf(this.signers.signer1.address)).to.equal(amount);
-      expect(await this.tkn.balanceOf(this.cf.address)).to.equal(amount);
+      expect(await this.tkn.balanceOf(this.lido.address)).to.equal(amount);
       expect(project.currentAmount).to.equal(amount);
       expect(project.funders).to.equal(1);
     });
@@ -85,19 +85,19 @@ describe("Unit tests", function () {
     it("should claim funds after successful funding", async function () {
       // Create project
       let goal: BigNumberish = su("500");
-      await this.cf.connect(this.signers.admin).createProject(goal, 10);
+      await this.lido.connect(this.signers.admin).createProject(goal, 10);
       let blockNum: number = await ethers.provider.getBlockNumber();
       let block = await ethers.provider.getBlock(blockNum);
       let creationTime = block.timestamp;
       // Fund project
       let amount: BigNumberish = su("600");
-      await this.tkn.connect(this.signers.signer1).approve(this.cf.address, amount);
-      await this.cf.connect(this.signers.signer1).fundProject(0, amount);
+      await this.tkn.connect(this.signers.signer1).approve(this.lido.address, amount);
+      await this.lido.connect(this.signers.signer1).fundProject(0, amount);
       // Fast forward time to end funding
       let timestamp: number = creationTime + 11 * 24 * 3600; // 11 days
       await ethers.provider.send("evm_mine", [timestamp]);
-      await this.cf.connect(this.signers.admin).claimFunds(0);
-      let project = await this.cf.projects(0);
+      await this.lido.connect(this.signers.admin).claimFunds(0);
+      let project = await this.lido.projects(0);
       expect(project.claimed).to.equal(amount);
       expect(project.currentAmount).to.equal(0);
     });
@@ -105,37 +105,37 @@ describe("Unit tests", function () {
     it("should claim refunds if funding failed", async function () {
       // Create project
       let goal: BigNumberish = su("500");
-      await this.cf.connect(this.signers.admin).createProject(goal, 10);
+      await this.lido.connect(this.signers.admin).createProject(goal, 10);
       let blockNum: number = await ethers.provider.getBlockNumber();
       let block = await ethers.provider.getBlock(blockNum);
       let creationTime = block.timestamp;
       // Fund project
       let amount: BigNumberish = su("400");
-      await this.tkn.connect(this.signers.signer1).approve(this.cf.address, amount);
-      await this.cf.connect(this.signers.signer1).fundProject(0, amount);
+      await this.tkn.connect(this.signers.signer1).approve(this.lido.address, amount);
+      await this.lido.connect(this.signers.signer1).fundProject(0, amount);
       // Fast forward time to end funding
       let timestamp: number = creationTime + 11 * 24 * 3600; // 11 days
       await ethers.provider.send("evm_mine", [timestamp]);
       // Claim refund
-      await this.cf.connect(this.signers.signer1).claimRefund(0);
-      let project = await this.cf.projects(0);
+      await this.lido.connect(this.signers.signer1).claimRefund(0);
+      let project = await this.lido.projects(0);
       expect(project.currentAmount).to.equal(0);
     });
 
     it("should allow reduction of funding", async function () {
       // Create project
       let goal: BigNumberish = su("500");
-      await this.cf.connect(this.signers.admin).createProject(goal, 10);
+      await this.lido.connect(this.signers.admin).createProject(goal, 10);
       // Fund project
       let amount: BigNumberish = su("400");
-      await this.tkn.connect(this.signers.signer1).approve(this.cf.address, amount);
-      await this.cf.connect(this.signers.signer1).fundProject(0, amount);
+      await this.tkn.connect(this.signers.signer1).approve(this.lido.address, amount);
+      await this.lido.connect(this.signers.signer1).fundProject(0, amount);
       // Reduce Funding
       let reduceAmount1: BigNumberish = su("100");
-      await this.cf.connect(this.signers.signer1).reduceFunding(0, reduceAmount1);
-      let project = await this.cf.projects(0);
+      await this.lido.connect(this.signers.signer1).reduceFunding(0, reduceAmount1);
+      let project = await this.lido.projects(0);
       expect(project.currentAmount).to.equal(su("300"));
-      await expect(this.cf.connect(this.signers.signer1).reduceFunding(0, amount)).to.be.reverted;
+      await expect(this.lido.connect(this.signers.signer1).reduceFunding(0, amount)).to.be.reverted;
     });
   });
 });
