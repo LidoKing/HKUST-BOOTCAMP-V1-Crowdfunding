@@ -4,7 +4,7 @@ import { expect } from "chai";
 import { artifacts, ethers, waffle } from "hardhat";
 import type { Artifact } from "hardhat/types";
 
-import type { Crowdfund } from "../../src/types/contracts/Crowdfund";
+import type { Lidogogo } from "../../src/types/contracts/Lidogogo";
 import type { TestToken } from "../../src/types/contracts/TestToken";
 import { Signers } from "../types";
 
@@ -20,7 +20,7 @@ describe("Unit tests", function () {
     this.signers.signer4 = signers[4];
   });
 
-  describe("Crowdfund", function () {
+  describe("Lidogogo", function () {
     beforeEach(async function () {
       const tknArtifact: Artifact = await artifacts.readArtifact("TestToken");
       this.tkn = <TestToken>(
@@ -35,8 +35,13 @@ describe("Unit tests", function () {
         ])
       );
 
-      const cfArtifact: Artifact = await artifacts.readArtifact("Crowdfund");
-      this.cf = <Crowdfund>await waffle.deployContract(this.signers.admin, cfArtifact, [this.tkn.address]);
+      const lidogogoArtifact: Artifact = await artifacts.readArtifact("Lidogogo");
+      this.lido = <Lidogogo>(
+        await waffle.deployContract(this.signers.admin, lidogogoArtifact, [
+          this.tkn.address,
+          0x794a61358d6845594f94dc1db02a252b5b4814ad,
+        ])
+      ); //Aave V3 mainnet address
     });
 
     // Convert to smallest unit
