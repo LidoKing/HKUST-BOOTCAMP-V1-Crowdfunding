@@ -1,1 +1,2 @@
+import "./Lidogogo";
 import "./greeter";
