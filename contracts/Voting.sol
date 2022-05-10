@@ -70,11 +70,18 @@ contract Voting is Initiation {
     }
 
     /**
+     * @dev CAller is project creator
+     */
+    modifier isCreator(uint256 _projectId) {
+        require(projects[_projectId].creator == msg.sender, "You are not the creator of the project.");
+        _;
+    }
+
+    /**
      * @dev Caller is project creator, fundign has ended, funding goal reached
      */
     modifier initiable(uint256 _projectId) {
         Project storage thisProject = projects[_projectId];
-        require(thisProject.creator == msg.sender, "You are not the creator of the project.");
         require(uint64(block.timestamp) >= thisProject.endTime, "Funding of this project has not ended.");
         require(thisProject.currentAmount >= thisProject.goal, "Funding goal is not reached.");
         _;
@@ -86,7 +93,6 @@ contract Voting is Initiation {
     modifier proceed(uint256 _projectId, uint256 _toPhase) {
         // Only valid in storage due to presence of mappings
         Phase storage prevPhase = projectState[_projectId].phases[_toPhase - 1];
-        require(projects[_projectId].creator == msg.sender, "You are not the creator of the project.");
         require(uint64(block.timestamp) > prevPhase.deadline, "Previous phase has not ended.");
         require(
             uint128(proposals[_projectId][_toPhase - 1].typeTrack[_toPhase - 1]) >=
@@ -99,19 +105,14 @@ contract Voting is Initiation {
     }
 
     /**
-     * @dev Within voting period, funded project, have not voted
+     * @dev Within voting period, have not voted
      */
-    modifier votable(
-        uint256 _projectId,
-        uint256 _phase,
-        address _funder
-    ) {
+    modifier votable(uint256 _projectId, uint256 _phase) {
         Proposal storage thisProposal = proposals[_projectId][_phase];
         require(
             uint64(block.timestamp) >= thisProposal.voteStart && uint64(block.timestamp) <= thisProposal.voteEnd,
             "Not within voting period"
         );
-        require(projects[_projectId].hasFunded[msg.sender] == true, "You did not fund this project.");
         require(proposals[_projectId][_phase].voted[msg.sender] == false, "You have already voted.");
         _;
     }
@@ -120,13 +121,8 @@ contract Voting is Initiation {
      * @dev Scenario 1: Rework passed -> claim phase fund (voting ended, sum of vote types less than or equal totalVotes, rework passed)
      *      Scenario 2: Proposal passed -> claim phase fund (voting ended, sum of vote types less than or equal totalVotes, proposal passed)
      */
-    modifier claimable(
-        uint256 _projectId,
-        uint256 _phase,
-        address _claimer
-    ) {
+    modifier claimable(uint256 _projectId, uint256 _phase) {
         Proposal storage thisProposal = proposals[_projectId][_phase];
-        require(msg.sender == projects[_projectId].creator, "You are not the creator of the project.");
         require(
             projectState[_projectId].phases[_phase].status == PhaseStatus.Voting,
             "Funds for this phase has already been claimed."
@@ -159,7 +155,7 @@ contract Voting is Initiation {
     }
 
     /**
-     * @dev Voting ended, rework rejected, has funded, not yet refunded
+     * @dev Voting ended, rework rejected, not yet refunded
      */
     modifier devRefundable(uint256 _projectId) {
         uint256 phase = projectState[_projectId].currentPhase;
@@ -169,7 +165,6 @@ contract Voting is Initiation {
             thisProposal.typeTrack[0] < projectState[_projectId].threshold,
             "Proposal passed, refund not available."
         );
-        require(projects[_projectId].hasFunded[msg.sender] == true, "You did not fund this project.");
         require(projects[_projectId].refunded[msg.sender] == false, "Refund has already been claimed.");
         _;
     }
@@ -183,7 +178,7 @@ contract Voting is Initiation {
         uint256 _projectId,
         uint256[] calldata _deadlines,
         uint256[] calldata _fundAllocation
-    ) external initiable(_projectId) {
+    ) external isCreator(_projectId) initiable(_projectId) {
         require(_deadlines.length == _fundAllocation.length, "Unmatched number of phases.");
         // Deadlines and fund allocations plan
         _initializeState(_projectId, _deadlines, _fundAllocation);
@@ -200,7 +195,11 @@ contract Voting is Initiation {
      * @dev Proceed to next phase
      * @param _phase The phase to proceed to
      */
-    function phaseProposal(uint256 _projectId, uint256 _phase) external proceed(_projectId, _phase) {
+    function phaseProposal(uint256 _projectId, uint256 _phase)
+        external
+        isCreator(_projectId)
+        proceed(_projectId, _phase)
+    {
         projectState[_projectId].currentPhase = uint8(_phase);
         // Start voting for proposal
         _initializeProposal(_projectId, _phase, false);
@@ -215,7 +214,7 @@ contract Voting is Initiation {
         uint256 _projectId,
         uint256 _phase,
         uint256 _type
-    ) external votable(_projectId, _phase, msg.sender) {
+    ) external votable(_projectId, _phase) isFunder(_projectId) {
         _updateVote(_projectId, _phase, _type);
 
         emit Vote(_projectId, _phase, msg.sender, _type);
@@ -229,7 +228,7 @@ contract Voting is Initiation {
         uint256 _projectId,
         uint256 _phase,
         string calldata _improvement
-    ) external votable(_projectId, _phase, msg.sender) {
+    ) external votable(_projectId, _phase) isFunder(_projectId) {
         _updateVote(_projectId, _phase, 2);
 
         emit Vote(_projectId, _phase, msg.sender, 2);
@@ -249,7 +248,7 @@ contract Voting is Initiation {
         uint256 _projectId,
         uint256 _phase,
         address _delegatee
-    ) external votable(_projectId, _phase, msg.sender) {
+    ) external votable(_projectId, _phase) isFunder(_projectId) {
         require(projects[_projectId].hasFunded[_delegatee] == true, "Delegatee is not a funder of the project.");
         Proposal storage thisProposal = proposals[_projectId][_phase];
         thisProposal.voted[msg.sender] = true;
@@ -274,9 +273,8 @@ contract Voting is Initiation {
      * @notice Creator has 2 days, upon completion of voting, to submit a rework of proposal if it was not approved
      * @dev Initiate new voting round and push deadline of remaining phases
      */
-    function reworkProposal(uint256 _projectId, uint256 _phase) external {
+    function reworkProposal(uint256 _projectId, uint256 _phase) external isCreator(_projectId) {
         Proposal storage thisProposal = proposals[_projectId][_phase];
-        require(msg.sender == projects[_projectId].creator, "You are not the creator of the project.");
         require(thisProposal.reworked == false, "Proposal has been reworked for once already.");
         // Period for submission of revemped proposal
         require(
@@ -300,7 +298,11 @@ contract Voting is Initiation {
     /**
      * @dev Fund claim with voting and time condition check
      */
-    function claimFunds(uint256 _projectId, uint256 _phase) external claimable(_projectId, _phase, msg.sender) {
+    function claimFunds(uint256 _projectId, uint256 _phase)
+        external
+        isCreator(_projectId)
+        claimable(_projectId, _phase)
+    {
         _claimPhase(_projectId, _phase);
     }
 
@@ -308,7 +310,7 @@ contract Voting is Initiation {
      * @dev Retrieve remaining funds if rework of proposal also rejected
      *      No need to modify project currentAmount which will remain as 0 due to immediate transfer after withdrawal from aave
      */
-    function developmentRefund(uint256 _projectId) external devRefundable(_projectId) {
+    function developmentRefund(uint256 _projectId) external isFunder(_projectId) devRefundable(_projectId) {
         Project storage thisProject = projects[_projectId];
         thisProject.refunded[msg.sender] = true;
         uint256 refundAmount = _refundAmount(_projectId);

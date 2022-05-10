@@ -45,6 +45,11 @@ contract Crowdfund {
         tkn = IERC20(_tokenAddress);
     }
 
+    modifier isFunder(uint256 _projectId) {
+        require(projects[_projectId].hasFunded[msg.sender] != true, "You did not fund this project.");
+        _;
+    }
+
     /**
      * @dev Funding ended, funding goal reached, has funded, never refunded
      */
@@ -52,7 +57,6 @@ contract Crowdfund {
         Project storage thisProject = projects[_projectId];
         require(block.timestamp >= thisProject.endTime, "Funding of this project has not ended.");
         require(thisProject.currentAmount < thisProject.goal, "Funding goal has been reached, refund not allowed.");
-        require(thisProject.hasFunded[msg.sender] != true, "You did not fund this project.");
         require(thisProject.refunded[msg.sender] == false, "Refund has already been claimed");
         _;
     }
@@ -114,7 +118,7 @@ contract Crowdfund {
     }
 
     /**
-     * @dev Reduce funded amount, remove funder if all funded money is withdrawn
+     * @dev Reduce funded amount during funding phase, remove funder if all funded money is withdrawn
      */
     function reduceFunding(uint256 _projectId, uint256 _amountToReduce) public notEnded(_projectId) {
         Project storage thisProject = projects[_projectId];
@@ -131,9 +135,9 @@ contract Crowdfund {
     }
 
     /**
-     * @dev Refund for funding phase
+     * @dev Claim refund for failed funding
      */
-    function fundingRefund(uint256 _projectId) external fundingRefundable(_projectId) {
+    function fundingRefund(uint256 _projectId) external fundingRefundable(_projectId) isFunder(_projectId) {
         Project storage thisProject = projects[_projectId];
 
         thisProject.refunded[msg.sender] = true;
