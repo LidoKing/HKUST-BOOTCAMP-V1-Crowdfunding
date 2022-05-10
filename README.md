@@ -11,7 +11,9 @@ General flow:
 5. Builders claim funds for the phase, withdrawing corresponding amount funds from yield farm, and starts development
 6. Step 4 and 5 repeats until project development is complete
 
-![Architecture Diagram](https://user-images.githubusercontent.com/55234791/167608518-7efbbe6e-bef0-411c-8d36-78c86eb2495e.jpeg)
+Architecture diagram:
+
+![Architecture Diagram](https://user-images.githubusercontent.com/55234791/167614814-06c4032a-ca46-495d-8110-3e65a97ef1e3.jpeg)
 
 ## Phased Fund Release
 
