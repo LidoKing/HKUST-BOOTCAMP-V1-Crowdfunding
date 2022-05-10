@@ -229,7 +229,7 @@ contract Voting is Initiation {
         uint256 _projectId,
         uint256 _phase,
         string calldata _improvement
-    ) external {
+    ) external votable(_projectId, _phase, msg.sender) {
         _updateVote(_projectId, _phase, 2);
 
         emit Vote(_projectId, _phase, msg.sender, 2);
