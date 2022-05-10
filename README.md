@@ -11,6 +11,8 @@ General flow:
 5. Builders claim funds for the phase, withdrawing corresponding amount funds from yield farm, and starts development
 6. Step 4 and 5 repeats until project development is complete
 
+![Architecture Diagram](https://user-images.githubusercontent.com/55234791/167608518-7efbbe6e-bef0-411c-8d36-78c86eb2495e.jpeg)
+
 ## Phased Fund Release
 
 The level of protection that funders have in current crowdfunding platforms remains to be low, leading to problems problems such as scam projects where builders just take all the money and do nothing, and delivery of products that fall short of expectations.
