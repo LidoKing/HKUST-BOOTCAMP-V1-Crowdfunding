@@ -1,11 +1,11 @@
 {
   "name": "@prb/solidity-template",
-  "description": "Template for writing Solidity smart contracts",
+  "description": "Lidogogo Crowdfunding",
   "version": "1.0.0",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "author": {
-    "name": "Paul Razvan Berg",
-    "url": "https://github.com/paulrberg"
+    "name": "LidoKing",
+    "url": "https://github.com/LidoKing"
   },
   "devDependencies": {
     "@aave/core-v3": "^1.13.1",
