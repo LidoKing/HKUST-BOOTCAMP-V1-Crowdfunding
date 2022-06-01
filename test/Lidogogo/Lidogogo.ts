@@ -39,7 +39,7 @@ describe("Unit tests", function () {
       this.lido = <Lidogogo>(
         await waffle.deployContract(this.signers.admin, lidogogoArtifact, [
           this.tkn.address,
-          0x794a61358d6845594f94dc1db02a252b5b4814ad,
+          "0x794a61358d6845594f94dc1db02a252b5b4814ad",
         ])
       ); //Aave V3 mainnet address
     });
@@ -59,8 +59,8 @@ describe("Unit tests", function () {
     });
 
     it("should create project", async function () {
-      let goal: BigNumberish = su("2500");
-      await this.lido.connect(this.signers.admin).createProject(goal, 30);
+      let goal: BigNumberish = su("3500");
+      await this.lido.connect(this.signers.admin).createProject(goal, 200);
       let project = await this.lido.projects(0);
       expect(project.creator).to.equal(this.signers.admin.address);
       expect(project.goal).to.equal(goal);
@@ -76,12 +76,13 @@ describe("Unit tests", function () {
       await this.tkn.connect(this.signers.signer1).approve(this.lido.address, amount);
       await this.lido.connect(this.signers.signer1).fundProject(0, amount);
       let project = await this.lido.projects(0);
-      expect(await this.tkn.balanceOf(this.signers.signer1.address)).to.equal(amount);
+      expect(await this.lido.connect(this.signers.signer1).getFundedAmount(0)).to.equal(amount);
       expect(await this.tkn.balanceOf(this.lido.address)).to.equal(amount);
       expect(project.currentAmount).to.equal(amount);
       expect(project.funders).to.equal(1);
     });
 
+    /*
     it("should claim funds after successful funding", async function () {
       // Create project
       let goal: BigNumberish = su("500");
@@ -101,6 +102,7 @@ describe("Unit tests", function () {
       expect(project.claimed).to.equal(amount);
       expect(project.currentAmount).to.equal(0);
     });
+    */
 
     it("should claim refunds if funding failed", async function () {
       // Create project
@@ -117,9 +119,10 @@ describe("Unit tests", function () {
       let timestamp: number = creationTime + 11 * 24 * 3600; // 11 days
       await ethers.provider.send("evm_mine", [timestamp]);
       // Claim refund
-      await this.lido.connect(this.signers.signer1).claimRefund(0);
+      await this.lido.connect(this.signers.signer1).fundingRefund(0);
       let project = await this.lido.projects(0);
       expect(project.currentAmount).to.equal(0);
+      expect(await this.lido.connect(this.signers.signer1).getFundedAmount(0)).to.equal(0);
     });
 
     it("should allow reduction of funding", async function () {
