@@ -45,8 +45,12 @@ contract Crowdfund {
         tkn = IERC20(_tokenAddress);
     }
 
+    function getFundedAmount(uint256 _projectId) public view returns (uint256) {
+        return projects[_projectId].fundedAmount[msg.sender];
+    }
+
     modifier isFunder(uint256 _projectId) {
-        require(projects[_projectId].hasFunded[msg.sender] != true, "You did not fund this project.");
+        require(projects[_projectId].hasFunded[msg.sender] == true, "You did not fund this project.");
         _;
     }
 
