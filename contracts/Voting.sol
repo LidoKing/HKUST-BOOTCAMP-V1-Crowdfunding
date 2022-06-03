@@ -34,7 +34,7 @@ contract Voting is Initiation {
     mapping(uint256 => mapping(uint256 => Proposal)) proposals;
     mapping(uint256 => mapping(uint256 => Proposal)) reworks;
 
-    constructor(address _tokenAddress, address _aavePoolAddress) Initiation(_tokenAddress, _aavePoolAddress) {}
+    //constructor(address _tokenAddress, address _aavePoolAddress) Initiation(_tokenAddress, _aavePoolAddress) {}
 
     /**
      * @dev Getter for all suggested improvements

@@ -39,11 +39,13 @@ contract Crowdfund {
      * @dev Ethereum mainnet DAI: 0x6B175474E89094C44Da98b954EedeAC495271d0F
      *      Polygon mainnet DAI: 0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063
      */
+    /*
     constructor(address _tokenAddress) {
         //dai = IDAIToken(_tokenAddress);
         tknAddress = _tokenAddress;
         tkn = IERC20(_tokenAddress);
     }
+    */
 
     function getFundedAmount(uint256 _projectId) public view returns (uint256) {
         return projects[_projectId].fundedAmount[msg.sender];

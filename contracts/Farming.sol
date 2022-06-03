@@ -11,10 +11,12 @@ contract Farming {
     /**
      * @dev Mainnets address (same for different blockchains): 0x794a61358D6845594F94dc1DB02A252b5b4814aD
      */
+    /*
     constructor(address _poolContractAddress) {
         aavePoolAddress = _poolContractAddress;
         pool = IPool(_poolContractAddress);
     }
+    */
 
     /**
      * @dev Supply tokens to aave staking pool

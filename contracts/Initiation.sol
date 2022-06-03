@@ -41,7 +41,7 @@ contract Initiation is Crowdfund, Farming {
 
     mapping(uint256 => State) projectState;
 
-    constructor(address _tokenAddress, address _aavePoolAddress) Crowdfund(_tokenAddress) Farming(_aavePoolAddress) {}
+    //constructor(address _tokenAddress, address _aavePoolAddress) Crowdfund(_tokenAddress) Farming(_aavePoolAddress) {}
 
     /**
      * @dev Getter for phase detail
