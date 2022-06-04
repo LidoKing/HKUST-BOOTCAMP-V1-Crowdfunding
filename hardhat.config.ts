@@ -134,6 +134,11 @@ const config: HardhatUserConfig = {
     deployer: "0xDaBd21Ed3aD4493512f5b75D7A5b9E679cc782bA",
     lindOwner: "0xDaBd21Ed3aD4493512f5b75D7A5b9E679cc782bA",
   },
+  verify: {
+    etherscan: {
+      apiKey: process.env.ETHERSCAN_API_KEY,
+    },
+  },
 };
 
 export default config;
