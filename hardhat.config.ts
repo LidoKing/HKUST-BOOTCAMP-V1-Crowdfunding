@@ -3,6 +3,8 @@ import "@nomiclabs/hardhat-waffle";
 import "@openzeppelin/hardhat-upgrades";
 import "@typechain/hardhat";
 import { config as dotenvConfig } from "dotenv";
+import "hardhat-deploy";
+import "hardhat-deploy-ethers";
 import "hardhat-gas-reporter";
 import "hardhat-spdx-license-identifier";
 import { HardhatUserConfig } from "hardhat/config";
@@ -63,6 +65,22 @@ function getChainConfig(chain: keyof typeof chainIds): NetworkUserConfig {
 
 const config: HardhatUserConfig = {
   defaultNetwork: "hardhat",
+  networks: {
+    hardhat: {
+      accounts: {
+        mnemonic,
+      },
+      chainId: chainIds.hardhat,
+    },
+    arbitrum: getChainConfig("arbitrum-mainnet"),
+    avalanche: getChainConfig("avalanche"),
+    bsc: getChainConfig("bsc"),
+    mainnet: getChainConfig("mainnet"),
+    optimism: getChainConfig("optimism-mainnet"),
+    "polygon-mainnet": getChainConfig("polygon-mainnet"),
+    "polygon-mumbai": getChainConfig("polygon-mumbai"),
+    rinkeby: getChainConfig("rinkeby"),
+  },
   etherscan: {
     apiKey: {
       arbitrumOne: process.env.ARBISCAN_API_KEY,
@@ -81,22 +99,6 @@ const config: HardhatUserConfig = {
     excludeContracts: [],
     src: "./contracts",
     coinmarketcap: process.env.CMC_API_KEY,
-  },
-  networks: {
-    hardhat: {
-      accounts: {
-        mnemonic,
-      },
-      chainId: chainIds.hardhat,
-    },
-    arbitrum: getChainConfig("arbitrum-mainnet"),
-    avalanche: getChainConfig("avalanche"),
-    bsc: getChainConfig("bsc"),
-    mainnet: getChainConfig("mainnet"),
-    optimism: getChainConfig("optimism-mainnet"),
-    "polygon-mainnet": getChainConfig("polygon-mainnet"),
-    "polygon-mumbai": getChainConfig("polygon-mumbai"),
-    rinkeby: getChainConfig("rinkeby"),
   },
   paths: {
     artifacts: "./artifacts",
@@ -127,6 +129,10 @@ const config: HardhatUserConfig = {
   spdxLicenseIdentifier: {
     overwrite: true,
     runOnCompile: true,
+  },
+  namedAccounts: {
+    deployer: "0xDaBd21Ed3aD4493512f5b75D7A5b9E679cc782bA",
+    lindOwner: "0xDaBd21Ed3aD4493512f5b75D7A5b9E679cc782bA",
   },
 };
 
