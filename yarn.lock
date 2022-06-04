@@ -2509,6 +2509,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@nomiclabs/hardhat-web3@npm:^2.0.0":
+  version: 2.0.0
+  resolution: "@nomiclabs/hardhat-web3@npm:2.0.0"
+  dependencies:
+    "@types/bignumber.js": ^5.0.0
+  peerDependencies:
+    hardhat: ^2.0.0
+    web3: ^1.0.0-beta.36
+  checksum: b777179ba395ec841848dc28bb7c583dc7a3dbf369a1f00d691157594d7cf74fe8ee7ae31ba1fb6424e2c39080ec386bda77cb56ad2517a0d1e55059178e1075
+  languageName: node
+  linkType: hard
+
 "@npmcli/move-file@npm:^1.0.1":
   version: 1.1.2
   resolution: "@npmcli/move-file@npm:1.1.2"
@@ -2584,6 +2596,7 @@ __metadata:
     "@nomiclabs/hardhat-ethers": ^2.0.5
     "@nomiclabs/hardhat-etherscan": ^3.0.3
     "@nomiclabs/hardhat-waffle": ^2.0.3
+    "@nomiclabs/hardhat-web3": ^2.0.0
     "@openzeppelin/contracts": ^4.5.0
     "@openzeppelin/contracts-upgradeable": ^4.6.0
     "@openzeppelin/hardhat-upgrades": ^1.18.0
@@ -2940,6 +2953,15 @@ __metadata:
   version: 5.0.1
   resolution: "@types/abstract-leveldown@npm:5.0.1"
   checksum: e32205dc7deeb80579a92f815888a027d6960e004903d048dca472a8e1b6a104a064a640703fe520a494a5d9b6873038561daa93557839ba0bbd538aa6bfe356
+  languageName: node
+  linkType: hard
+
+"@types/bignumber.js@npm:^5.0.0":
+  version: 5.0.0
+  resolution: "@types/bignumber.js@npm:5.0.0"
+  dependencies:
+    bignumber.js: "*"
+  checksum: f31a196da8b93d35c30879f4cc449e1099057ef27514554d2a5c80e2b1ba8cb8925919a2d92700d723ea959cb8b9d66f2917eea4f98a36f9f5d9e24c10c9c36f
   languageName: node
   linkType: hard
 
@@ -4720,17 +4742,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"bignumber.js@npm:*, bignumber.js@npm:^9.0.1":
+  version: 9.0.2
+  resolution: "bignumber.js@npm:9.0.2"
+  checksum: 8637b71d0a99104b20413c47578953970006fec6b4df796b9dcfd9835ea9c402ea0e727eba9a5ca9f9a393c1d88b6168c5bbe0887598b708d4f8b4870ad62e1f
+  languageName: node
+  linkType: hard
+
 "bignumber.js@npm:^9.0.0":
   version: 9.0.1
   resolution: "bignumber.js@npm:9.0.1"
   checksum: 6e72f6069d9db32fc8d27561164de9f811b15f9144be61f323d8b36150a239eea50c92e20ba38af2ba5e717af10b8ef12db8f9948fe2ff02bf17ede5239d15d3
-  languageName: node
-  linkType: hard
-
-"bignumber.js@npm:^9.0.1":
-  version: 9.0.2
-  resolution: "bignumber.js@npm:9.0.2"
-  checksum: 8637b71d0a99104b20413c47578953970006fec6b4df796b9dcfd9835ea9c402ea0e727eba9a5ca9f9a393c1d88b6168c5bbe0887598b708d4f8b4870ad62e1f
   languageName: node
   linkType: hard
 
