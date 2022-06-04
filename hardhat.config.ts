@@ -14,7 +14,6 @@ import { resolve } from "path";
 import "solidity-coverage";
 
 import "./tasks/accounts";
-import "./tasks/balance";
 import "./tasks/deploy";
 
 dotenvConfig({ path: resolve(__dirname, "./.env") });
