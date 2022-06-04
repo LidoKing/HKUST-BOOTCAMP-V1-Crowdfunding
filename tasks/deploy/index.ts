@@ -1,2 +1,0 @@
-import "./Lidogogo";
-import "./greeter";
