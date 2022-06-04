@@ -1,10 +1,12 @@
-import { Signer } from "@ethersproject/abstract-signer";
+import "@nomiclabs/hardhat-web3";
 import { task } from "hardhat/config";
 
-task("accounts", "Prints the list of accounts", async (_taskArgs, hre) => {
-  const accounts: Signer[] = await hre.ethers.getSigners();
+task("balance", "Prints an account's balance", async (_, { web3 }) => {
+  const accounts = await web3.eth.getAccounts();
 
-  for (const account of accounts) {
-    console.log(await account.getAddress());
+  for (let i = 0; i < 5; i++) {
+    const balance = await web3.eth.getBalance(accounts[i]);
+    const inEth = web3.utils.fromWei(balance, "ether");
+    console.log(`${accounts[i]}: ${inEth}ETH`);
   }
 });
